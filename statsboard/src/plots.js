@@ -6,7 +6,7 @@ export function makePlots(startTime, endTime) {
   monthPlots();
 
   function totalPlots() {
-    const url = `/api?start=${startTime}&end=${endTime}&format=json`;
+    const url = `/api?start=${startTime}${endTime ? `&end=${endTime}` : ''}&format=json`;
     fetch(url)
       .then((response) => response.json())
       .then((data) => {
@@ -55,7 +55,7 @@ export function makePlots(startTime, endTime) {
     }
 
     function monthPlots() {
-      const url = `/api?start=${startTime}&end=${endTime}&details=month&format=json`;
+      const url = `/api?start=${startTime}${endTime ? `&end=${endTime}` : ''}&details=month&format=json`;
       fetch(url)
         .then((response) => response.json())
         .then((data) => {

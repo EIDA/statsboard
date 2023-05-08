@@ -8,6 +8,16 @@ function App() {
   const [startTime, setStartTime] = useState(undefined);
   const [endTime, setEndTime] = useState(undefined);
   const [level, setLevel] = useState("eida");
+  const [showError, setShowError] = useState(false);
+
+  function handleClick() {
+      if (!startTime) {
+        setShowError(true);
+        return;
+      }
+      makePlots(startTime, endTime);
+      setShowError(false);
+    }
 
   return (
     <div className="App">
@@ -59,13 +69,22 @@ function App() {
         <input type="checkbox" name="maps-per-country" />
         <label>Maps per country </label>
       </div>
-      <button onClick={() => makePlots(startTime, endTime)}>Make Plots</button>
-      <div className="plots">
-        <div id="clients"></div>
-        <div id="bytes"></div>
-        <div id="pie-chart"></div>
-      </div>
-      <div id="clients-monthly"></div>
+      <button onClick={handleClick}>Make Plots</button>
+      {showError && (
+        <div className="error-message">
+          Specify at least 'Start time' parameter!
+        </div>
+      )}
+      {!showError && (
+        <>
+          <div className="plots">
+            <div id="clients"></div>
+            <div id="bytes"></div>
+            <div id="pie-chart"></div>
+          </div>
+          <div id="clients-monthly"></div>
+        </>
+      )}
     </div>
   );
 }
