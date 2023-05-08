@@ -1,5 +1,6 @@
 import './App.css';
 import { useState } from 'react';
+import { makePlots } from './plots.js';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -7,10 +8,6 @@ function App() {
   const [startTime, setStartTime] = useState(undefined);
   const [endTime, setEndTime] = useState(undefined);
   const [level, setLevel] = useState("eida");
-
-  function makePlots() {
-    console.log("TODO");
-  }
 
   return (
     <div className="App">
@@ -62,7 +59,13 @@ function App() {
         <input type="checkbox" name="maps-per-country" />
         <label>Maps per country </label>
       </div>
-      <button onClick={makePlots}>Make Plots</button>
+      <button onClick={() => makePlots(startTime, endTime)}>Make Plots</button>
+      <div className="plots">
+        <div id="clients"></div>
+        <div id="bytes"></div>
+        <div id="pie-chart"></div>
+      </div>
+      <div id="clients-monthly"></div>
     </div>
   );
 }

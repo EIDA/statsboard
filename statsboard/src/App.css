@@ -7,3 +7,13 @@
   color: #999;
   font-style: italic;
 }
+
+.plots {
+  display: flex;
+  width: 90%;
+  justify-content: center;
+}
+
+#clients, #bytes, #pie-chart {
+  flex: 1;
+}
