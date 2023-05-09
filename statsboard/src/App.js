@@ -82,7 +82,15 @@ function App() {
             <div id="bytes"></div>
             <div id="pie-chart"></div>
           </div>
-          <div id="clients-monthly"></div>
+          <div id="clients-month"></div>
+          <div id="bytes-month"></div>
+          <div id="requests-month"></div>
+          <div id="clients-year"></div>
+          <div id="bytes-year"></div>
+          <div id="requests-year"></div>
+          <div id="clients-country"></div>
+          <div id="bytes-country"></div>
+          <div id="requests-country"></div>
         </>
       )}
     </div>
