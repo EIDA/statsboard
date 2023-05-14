@@ -7,7 +7,7 @@ module.exports = function(app) {
       target: 'https://ws.resif.fr',
       changeOrigin: true,
       pathRewrite: {
-        '^/api': '/eidaws/statistics/1/dataselect/public'
+        '^/api': '/eidaws/statistics/1/dataselect'
       }
     })
   );

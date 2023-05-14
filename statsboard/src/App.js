@@ -1,6 +1,7 @@
 import './App.css';
 import { useState } from 'react';
-import { makePlots } from './plots.js';
+import { makePlotsEIDA } from './plotsEIDA.js';
+import { makePlotsNode } from './plotsNode.js';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -15,13 +16,26 @@ function App() {
         setShowError(true);
         return;
       }
-      makePlots(startTime, endTime);
+      switch(level) {
+        case "eida":
+          makePlotsEIDA(startTime, endTime);
+          break;
+        case "node":
+          makePlotsNode(startTime, endTime);
+          break;
+        default:
+          console.log("Something went wrong!");
+      }
       setShowError(false);
     }
 
   return (
     <div className="App">
       <h1>EIDA Statistics Dashboard</h1>
+      <div className="info">
+        This is dashboard UI which allows users to explore <a href="http://www.orfeus-eu.org/data/eida/">EIDA</a> usage statistics in the form of plots.
+        For more details, visit the <a href="https://ws.resif.fr/eidaws/statistics/1/">statistics webservice.</a>
+      </div>
       <div>
         <input type="checkbox" checked={isAuthenticated} onChange={() => setIsAuthenticated(!isAuthenticated)} />
         <label>Authentication</label>
@@ -58,17 +72,6 @@ function App() {
           </>
         )}
       </div>
-      <div>
-        <label>Plots: </label>
-        <input type="checkbox" name="total" />
-        <label>Total </label>
-        <input type="checkbox" name="per-month" />
-        <label>Per month </label>
-        <input type="checkbox" name="per-year" />
-        <label>Per year </label>
-        <input type="checkbox" name="maps-per-country" />
-        <label>Maps per country </label>
-      </div>
       <button onClick={handleClick}>Make Plots</button>
       {showError && (
         <div className="error-message">
@@ -77,20 +80,14 @@ function App() {
       )}
       {!showError && (
         <>
-          <div className="plots">
-            <div id="clients"></div>
-            <div id="bytes"></div>
-            <div id="pie-chart"></div>
+          <div className="total-plots">
+            <div id="total-clients"></div>
+            <div id="total-bytes"></div>
+            <div id="total-requests"></div>
           </div>
-          <div id="clients-month"></div>
-          <div id="bytes-month"></div>
-          <div id="requests-month"></div>
-          <div id="clients-year"></div>
-          <div id="bytes-year"></div>
-          <div id="requests-year"></div>
-          <div id="clients-country"></div>
-          <div id="bytes-country"></div>
-          <div id="requests-country"></div>
+          <div id="month-plots"></div>
+          <div id="year-plots"></div>
+          <div id="country-plots"></div>
         </>
       )}
     </div>
