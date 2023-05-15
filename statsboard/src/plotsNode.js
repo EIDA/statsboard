@@ -104,24 +104,36 @@ export function makePlotsNode(startTime, endTime) {
     function monthAndYearPlots(details = "month") {
       let url = null;
       if (details === "year") {
-        url = `/api/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}&details=year&format=json`;
+        url = `/api/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}&level=node&details=year&format=json`;
       }
       else {
-        url = `/api/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}&details=month&format=json`;
+        url = `/api/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}&level=node&details=month&format=json`;
       }
       fetch(url)
         .then((response) => response.json())
         .then((data) => {
           // show clients at first
-          const barData = [
-            {
-              x: data.results.map(result => result.date),
-              y: data.results.map(result => result.clients),
-              type: 'bar'
-            },
-            {}
-          ];
+          const nodes = [...new Set(data.results.map(result => result.node))];
+          const barData = nodes.map(node => {
+              const nodeResults = data.results.filter(result => result.node === node);
+              return {
+                x: nodeResults.map(result => result.date),
+                y: nodeResults.map(result => result.clients),
+                name: node,
+                type: 'bar'
+              }
+          });
+          const barDataBytes = nodes.map(node => {
+              const nodeResults = data.results.filter(result => result.node === node);
+              return {
+                x: nodeResults.map(result => result.date),
+                y: nodeResults.map(result => result.bytes),
+                name: node,
+                type: 'bar'
+              }
+          });
           let barLayout = {
+            barmode: 'stack',
             title: 'Number of unique users per '+details,
             xaxis: {
               title: details.charAt(0).toUpperCase() + details.slice(1),
@@ -136,17 +148,16 @@ export function makePlotsNode(startTime, endTime) {
                 {
                   args: [
                     {
-                      x: [data.results.map(result => result.date)],
-                      y: [data.results.map(result => result.clients), []],
-                      name: ["", ""],
+                      x: barData.map(bar => bar.x),
+                      y: barData.map(bar => bar.y),
+                      name: nodes,
                       type: 'bar'
                     },
                     {
                       title: 'Number of unique users per '+details,
                       yaxis: {
                         title: 'Unique users'
-                      },
-                      showlegend: false
+                      }
                     }
                   ],
                   label: 'Clients',
@@ -156,17 +167,16 @@ export function makePlotsNode(startTime, endTime) {
                 {
                   args: [
                     {
-                      x: [data.results.map(result => result.date)],
-                      y: [data.results.map(result => result.bytes), []],
-                      name: ["", ""],
+                      x: barDataBytes.map(bar => bar.x),
+                      y: barDataBytes.map(bar => bar.y),
+                      name: nodes,
                       type: 'bar'
                     },
                     {
                       title: 'Number of bytes per '+details,
                       yaxis: {
                         title: 'Bytes'
-                      },
-                      showlegend: false
+                      }
                     }
                   ],
                   label: 'Bytes',
@@ -186,8 +196,7 @@ export function makePlotsNode(startTime, endTime) {
                       title: 'Number of requests per '+details,
                       yaxis: {
                         title: 'Requests'
-                      },
-                      showlegend: true
+                      }
                     }
                   ],
                   label: 'Requests',

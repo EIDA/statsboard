@@ -4,11 +4,15 @@ This repository hosts a UI to help users explore EIDA statistics and serves as a
 
 ## Steps to locally deploy this project
 
- - Clone the current repository.
-
  - Install [Node.js](https://nodejs.org).
 
- - Move to application code folder:
+ - Clone the current repository and enter it:
+   ```
+   git clone https://github.com/EIDA/statsboard.git
+   cd statsboard
+   ```
+
+ - While inside the project folder, move to application code folder:
    ```
    cd statsboard
    ```
