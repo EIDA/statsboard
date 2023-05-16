@@ -9,25 +9,30 @@ function App() {
   const [startTime, setStartTime] = useState(undefined);
   const [endTime, setEndTime] = useState(undefined);
   const [level, setLevel] = useState("eida");
-  const [showError, setShowError] = useState(false);
+  const [showError, setShowError] = useState("");
 
   function handleClick() {
-      if (!startTime) {
-        setShowError(true);
-        return;
-      }
-      switch(level) {
-        case "eida":
-          makePlotsEIDA(startTime, endTime);
-          break;
-        case "node":
-          makePlotsNode(startTime, endTime);
-          break;
-        default:
-          console.log("Something went wrong!");
-      }
-      setShowError(false);
+    const nodeCheckboxesContainer = document.getElementById('node-checkboxes');
+    if (nodeCheckboxesContainer) {
+      nodeCheckboxesContainer.innerHTML = '';
     }
+    if (!startTime) {
+      setShowError("Specify at least 'Start time' parameter!");
+      return;
+    }
+    switch(level) {
+      case "eida":
+        makePlotsEIDA(startTime, endTime);
+        break;
+      case "node":
+        makePlotsNode(startTime, endTime);
+        break;
+      default:
+        setShowError("Plots below Node level are not implemented yet!");
+        return;
+    }
+    setShowError("");
+  }
 
   return (
     <div className="App">
@@ -75,7 +80,7 @@ function App() {
       <button onClick={handleClick}>Make Plots</button>
       {showError && (
         <div className="error-message">
-          Specify at least 'Start time' parameter!
+          {showError}
         </div>
       )}
       {!showError && (
@@ -87,7 +92,10 @@ function App() {
           </div>
           <div id="month-plots"></div>
           <div id="year-plots"></div>
-          <div id="country-plots"></div>
+          <div className="mapAndBoxes">
+            <div id="country-plots"></div>
+            <div id="node-checkboxes"></div>
+          </div>
         </>
       )}
     </div>

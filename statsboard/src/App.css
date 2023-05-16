@@ -21,13 +21,18 @@ h1 {
   font-style: italic;
 }
 
-.total-plots {
+.total-plots, .mapAndBoxes {
   display: flex;
   justify-content: center;
 }
 
-#total-clients, #total-bytes, #total-requests {
+#total-clients, #total-bytes, #total-requests, #country-plots, #node-checkboxes {
   flex: 1;
+}
+
+#node-checkboxes {
+  margin-left: 50px;
+  text-align: left;
 }
 
 .error-message {

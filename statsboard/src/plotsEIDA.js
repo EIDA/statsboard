@@ -8,7 +8,7 @@ export function makePlotsEIDA(startTime, endTime) {
   mapPlots();
 
   function totalPlots() {
-    const url = `/api/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}&format=json`;
+    const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}&format=json`;
     fetch(url)
       .then((response) => response.json())
       .then((data) => {
@@ -44,7 +44,7 @@ export function makePlotsEIDA(startTime, endTime) {
         const pieDataRequests = [
           {
             values: [data.results[0].nb_successful_reqs, data.results[0].nb_reqs - data.results[0].nb_successful_reqs],
-            labels: ["Successful Requests", "Failed Requests"],
+            labels: ["Successful Requests", "Unsuccessful Requests"],
             type: "pie",
           },
         ];
@@ -59,10 +59,10 @@ export function makePlotsEIDA(startTime, endTime) {
     function monthAndYearPlots(details = "month") {
       let url = null;
       if (details === "year") {
-        url = `/api/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}&details=year&format=json`;
+        url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}&details=year&format=json`;
       }
       else {
-        url = `/api/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}&details=month&format=json`;
+        url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}&details=month&format=json`;
       }
       fetch(url)
         .then((response) => response.json())
@@ -72,6 +72,7 @@ export function makePlotsEIDA(startTime, endTime) {
             {
               x: data.results.map(result => result.date),
               y: data.results.map(result => result.clients),
+              name: "",
               type: 'bar'
             },
             {}
@@ -104,7 +105,7 @@ export function makePlotsEIDA(startTime, endTime) {
                       showlegend: false
                     }
                   ],
-                  label: 'Clients',
+                  label: 'Unique Users',
                   method: 'update'
                 },
                 // bytes button
@@ -165,7 +166,7 @@ export function makePlotsEIDA(startTime, endTime) {
     }
 
     function mapPlots() {
-      const url = `/api/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}&details=country&format=json`;
+      const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}&details=country&format=json`;
       fetch(url)
         .then((response) => response.json())
         .then((data) => {
@@ -178,17 +179,19 @@ export function makePlotsEIDA(startTime, endTime) {
             locationmode: 'ISO-3',
             locations: countryCodesISO3,
             z: data.results.map(result => result.clients),
-            type: 'choropleth',
+            type: 'choroplethmapbox',
+            geojson: new URL('./world-countries.json', import.meta.url).href,
             colorscale: 'Viridis',
             autocolorscale: false,
             reversescale: true
           }];
           const mapLayout = {
             title: 'Number of unique users per country',
-            geo: {
-              projection: {
-                type: 'natural earth'
-              }
+            width: 1000,
+            mapbox: {
+              style: "open-street-map",
+              center: {lon: 0, lat: 20},
+              zoom: 0
             },
             updatemenus: [{
               buttons: [
@@ -197,7 +200,7 @@ export function makePlotsEIDA(startTime, endTime) {
                   args: [
                     {
                       z: [data.results.map(result => result.clients)],
-                      type: 'choropleth',
+                      type: 'choroplethmapbox',
                       colorscale: 'Viridis',
                       autocolorscale: false,
                       reversescale: true
@@ -206,7 +209,7 @@ export function makePlotsEIDA(startTime, endTime) {
                       title: 'Number of unique users per country',
                     }
                   ],
-                  label: 'Clients',
+                  label: 'Unique Users',
                   method: 'update'
                 },
                 // bytes button
@@ -214,7 +217,7 @@ export function makePlotsEIDA(startTime, endTime) {
                   args: [
                     {
                       z: [data.results.map(result => result.bytes)],
-                      type: 'choropleth',
+                      type: 'choroplethmapbox',
                       colorscale: 'Viridis',
                       autocolorscale: false,
                       reversescale: true
@@ -231,7 +234,7 @@ export function makePlotsEIDA(startTime, endTime) {
                   args: [
                     {
                       z: [data.results.map(result => result.nb_reqs)],
-                      type: 'choropleth',
+                      type: 'choroplethmapbox',
                       colorscale: 'Viridis',
                       autocolorscale: false,
                       reversescale: true
@@ -248,7 +251,7 @@ export function makePlotsEIDA(startTime, endTime) {
                   args: [
                     {
                       z: [data.results.map(result => result.nb_successful_reqs)],
-                      type: 'choropleth',
+                      type: 'choroplethmapbox',
                       colorscale: 'Viridis',
                       autocolorscale: false,
                       reversescale: true
@@ -265,7 +268,7 @@ export function makePlotsEIDA(startTime, endTime) {
                   args: [
                     {
                       z: [data.results.map(result => result.nb_reqs - result.nb_successful_reqs)],
-                      type: 'choropleth',
+                      type: 'choroplethmapbox',
                       colorscale: 'Viridis',
                       autocolorscale: false,
                       reversescale: true
