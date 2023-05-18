@@ -20,18 +20,21 @@ function App() {
       setShowError("Specify at least 'Start time' parameter!");
       return;
     }
-    switch(level) {
-      case "eida":
-        makePlotsEIDA(startTime, endTime);
-        break;
-      case "node":
-        makePlotsNode(startTime, endTime);
-        break;
-      default:
-        setShowError("Plots below Node level are not implemented yet!");
-        return;
-    }
     setShowError("");
+    // delay execution to allow React to update the page and create the loading-msg element, otherwise error pops up
+    setTimeout(() => {
+      switch(level) {
+        case "eida":
+          makePlotsEIDA(startTime, endTime);
+          break;
+        case "node":
+          makePlotsNode(startTime, endTime);
+          break;
+        default:
+          setShowError("Plots below Node level are not implemented yet!");
+          return;
+      }
+    }, 200);
   }
 
   return (
@@ -85,6 +88,7 @@ function App() {
       )}
       {!showError && (
         <>
+          <div id="loading-msg"></div>
           <div className="total-plots">
             <div id="total-clients"></div>
             <div id="total-bytes"></div>

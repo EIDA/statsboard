@@ -3,6 +3,18 @@ import ReactDOM from 'react-dom/client';
 
 export function makePlotsNode(startTime, endTime) {
 
+  // show message while loading
+  let loadingMsg = document.getElementById("loading-msg");
+  loadingMsg.innerHTML = "Loading plots. Please wait...";
+  function flashLoadingMessage() {
+    if (loadingMsg.innerHTML === "Loading plots. Please wait...") {
+      loadingMsg.innerHTML = "Loading plots. Please wait";
+    } else {
+      loadingMsg.innerHTML += ".";
+    }
+  }
+  const intervalId = setInterval(flashLoadingMessage, 500);
+
   totalPlots();
   monthAndYearPlots("month");
   monthAndYearPlots("year");
@@ -488,6 +500,11 @@ export function makePlotsNode(startTime, endTime) {
             Plotly.react('country-plots', newMapData, mapLayout);
           }
         })
-        .catch((error) => console.log(error));
+        .catch((error) => console.log(error))
+        .finally(() => {
+          // remove loading message
+          clearInterval(intervalId);
+          loadingMsg.innerHTML = "";
+        });
     }
 }

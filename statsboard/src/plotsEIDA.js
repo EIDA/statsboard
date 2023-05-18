@@ -2,6 +2,18 @@ import Plotly from 'plotly.js-dist';
 
 export function makePlotsEIDA(startTime, endTime) {
 
+  // show message while loading
+  let loadingMsg = document.getElementById("loading-msg");
+  loadingMsg.innerHTML = "Loading plots. Please wait...";
+  function flashLoadingMessage() {
+    if (loadingMsg.innerHTML === "Loading plots. Please wait...") {
+      loadingMsg.innerHTML = "Loading plots. Please wait";
+    } else {
+      loadingMsg.innerHTML += ".";
+    }
+  }
+  const intervalId = setInterval(flashLoadingMessage, 500);
+
   totalPlots();
   monthAndYearPlots("month");
   monthAndYearPlots("year");
@@ -287,6 +299,11 @@ export function makePlotsEIDA(startTime, endTime) {
           };
           Plotly.newPlot('country-plots', mapData, mapLayout, {displaylogo: false});
         })
-        .catch((error) => console.log(error));
+        .catch((error) => console.log(error))
+        .finally(() => {
+          // remove loading message
+          clearInterval(intervalId);
+          loadingMsg.innerHTML = "";
+        });
     }
 }
