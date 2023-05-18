@@ -6,7 +6,7 @@ export function makePlotsNode(startTime, endTime) {
   totalPlots();
   monthAndYearPlots("month");
   monthAndYearPlots("year");
-  //mapPlots();
+  mapPlots();
 
   function totalPlots() {
     const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}&level=node&format=json`;
@@ -256,22 +256,40 @@ export function makePlotsNode(startTime, endTime) {
       fetch(url)
         .then((response) => response.json())
         .then((data) => {
+          // aggregate the results per country
+          let aggregatedResults = data.results.reduce((aggregate, result) => {
+            if (!aggregate[result.country]) {
+              aggregate[result.country] = {
+                country: result.country,
+                clients: 0,
+                bytes: 0,
+                nb_reqs: 0,
+                nb_successful_reqs: 0,
+              };
+            }
+            aggregate[result.country].clients += result.clients;
+            aggregate[result.country].bytes += result.bytes;
+            aggregate[result.country].nb_reqs += result.nb_reqs;
+            aggregate[result.country].nb_successful_reqs += result.nb_successful_reqs;
+            return aggregate;
+          }, {});
+
           // convert ISO-2 to ISO-3 country codes
           const iso2ToIso3 = require('country-iso-2-to-3');
-          const countryCodesISO3 = data.results.map(result => result.country).map(code => iso2ToIso3(code));
+          const countryCodesISO3 = Object.values(aggregatedResults).map(result => result.country).map(code => iso2ToIso3(code));
 
-          // show clients from all countries at first
+          // show clients to all nodes at first
           const mapData = [{
             locationmode: 'ISO-3',
             locations: countryCodesISO3,
-            z: data.results.map(result => result.clients),
+            z: Object.values(aggregatedResults).map(result => result.clients),
             type: 'choroplethmapbox',
             geojson: new URL('./world-countries.json', import.meta.url).href,
             colorscale: 'Viridis',
             autocolorscale: false,
             reversescale: true
           }];
-          const mapLayout = {
+          let mapLayout = {
             title: 'Number of unique users per country',
             width: 1000,
             mapbox: {
@@ -285,7 +303,7 @@ export function makePlotsNode(startTime, endTime) {
                 {
                   args: [
                     {
-                      z: [data.results.map(result => result.clients)],
+                      z: [Object.values(aggregatedResults).map(result => result.clients)],
                       type: 'choroplethmapbox',
                       colorscale: 'Viridis',
                       autocolorscale: false,
@@ -302,7 +320,7 @@ export function makePlotsNode(startTime, endTime) {
                 {
                   args: [
                     {
-                      z: [data.results.map(result => result.bytes)],
+                      z: [Object.values(aggregatedResults).map(result => result.bytes)],
                       type: 'choroplethmapbox',
                       colorscale: 'Viridis',
                       autocolorscale: false,
@@ -319,7 +337,7 @@ export function makePlotsNode(startTime, endTime) {
                 {
                   args: [
                     {
-                      z: [data.results.map(result => result.nb_reqs)],
+                      z: [Object.values(aggregatedResults).map(result => result.nb_reqs)],
                       type: 'choroplethmapbox',
                       colorscale: 'Viridis',
                       autocolorscale: false,
@@ -336,7 +354,7 @@ export function makePlotsNode(startTime, endTime) {
                 {
                   args: [
                     {
-                      z: [data.results.map(result => result.nb_successful_reqs)],
+                      z: [Object.values(aggregatedResults).map(result => result.nb_successful_reqs)],
                       type: 'choroplethmapbox',
                       colorscale: 'Viridis',
                       autocolorscale: false,
@@ -353,7 +371,7 @@ export function makePlotsNode(startTime, endTime) {
                 {
                   args: [
                     {
-                      z: [data.results.map(result => result.nb_reqs - result.nb_successful_reqs)],
+                      z: [Object.values(aggregatedResults).map(result => result.nb_reqs - result.nb_successful_reqs)],
                       type: 'choroplethmapbox',
                       colorscale: 'Viridis',
                       autocolorscale: false,
@@ -374,7 +392,7 @@ export function makePlotsNode(startTime, endTime) {
           Plotly.newPlot('country-plots', mapData, mapLayout, {displaylogo: false});
 
           const nodes = [...new Set(data.results.map(result => result.node))];
-          const nodeCheckboxes = nodes.map((node, index) => (
+          let nodeCheckboxes = nodes.map((node, index) => (
             <div key={index}>
               <input type="checkbox" id={`node-${index}`} value={node} defaultChecked onChange={handleCheckboxClick} />
               <label htmlFor={`node-${index}`}>{node}</label>
@@ -386,31 +404,87 @@ export function makePlotsNode(startTime, endTime) {
           let lastClickedTime = 0;
           let lastClickedCheckbox = null;
           function handleCheckboxClick(event) {
+            // first define checkboxes behavior
             const checkbox = event.target;
             const currentTime = new Date().getTime();
             const timeDiff = currentTime - lastClickedTime;
+            const checkboxes = document.querySelectorAll('#node-checkboxes input[type="checkbox"]');
+            const checkedCount = document.querySelectorAll('#node-checkboxes input[type="checkbox"]:checked').length;
             if (checkbox === lastClickedCheckbox && timeDiff < 300) {
-              nodeCheckboxes.forEach((cb) => {
-                cb.checked = cb === checkbox;
-              });
-            } else {
-              checkbox.checked = !checkbox.checked;
+              if (checkedCount === 1 && checkbox.checked) {
+                checkboxes.forEach((cb) => {
+                  cb.checked = true;
+                });
+              }
+              else {
+                checkboxes.forEach((cb) => {
+                  cb.checked = (cb === checkbox);
+                });
+              }
             }
             lastClickedCheckbox = checkbox;
             lastClickedTime = currentTime;
-            const checkedNodes = document.querySelectorAll('input[name="node"]:checked');
-            const selectedNodes = Array.from(checkedNodes).map(node => node.value);
-            const filteredData = data.results.filter(result => selectedNodes.includes(result.node));
+            // now update the plot with appropriate data
+            const checked = document.querySelectorAll('#node-checkboxes input[type="checkbox"]:checked');
+            const selectedNodes = [];
+            checked.forEach((cb) => {
+              selectedNodes.push(cb.value);
+            })
+            const filteredData = data.results.filter((result) => selectedNodes.includes(result.node));
+            aggregatedResults = filteredData.reduce((aggregate, result) => {
+              if (!aggregate[result.country]) {
+                aggregate[result.country] = {
+                  country: result.country,
+                  clients: 0,
+                  bytes: 0,
+                  nb_reqs: 0,
+                  nb_successful_reqs: 0,
+                };
+              }
+              aggregate[result.country].clients += result.clients;
+              aggregate[result.country].bytes += result.bytes;
+              aggregate[result.country].nb_reqs += result.nb_reqs;
+              aggregate[result.country].nb_successful_reqs += result.nb_successful_reqs;
+              return aggregate;
+            }, {});
+            const newCountryCodesISO3 = Object.values(aggregatedResults).map(result => result.country).map(code => iso2ToIso3(code));
+            const activeButtonIndex = mapLayout.updatemenus[0].active;
+            const zValues = Object.values(aggregatedResults).map(result => {
+              if (activeButtonIndex === 0 || activeButtonIndex === undefined) {
+                return result.clients;
+              } else if (activeButtonIndex === 1) {
+                return result.bytes;
+              } else if (activeButtonIndex === 2) {
+                return result.nb_reqs;
+              } else if (activeButtonIndex === 3) {
+                return result.nb_successful_reqs;
+              } else if (activeButtonIndex === 4) {
+                return result.nb_reqs - result.nb_successful_reqs;
+              }
+            });
             const newMapData = [{
               locationmode: 'ISO-3',
-              locations: countryCodesISO3,
-              z: filteredData.map(result => result.clients),
+              locations: newCountryCodesISO3,
+              z: zValues,
               type: 'choroplethmapbox',
               geojson: new URL('./world-countries.json', import.meta.url).href,
               colorscale: 'Viridis',
               autocolorscale: false,
               reversescale: true
             }];
+            mapLayout.updatemenus[0].buttons.forEach((button, index) => {
+              if (button && index === 0) {
+                button.args[0].z = [Object.values(aggregatedResults).map(result => result.clients)]
+              } else if (button && index === 1) {
+                button.args[0].z = [Object.values(aggregatedResults).map(result => result.bytes)]
+              } else if (button && index === 2) {
+                button.args[0].z = [Object.values(aggregatedResults).map(result => result.nb_reqs)]
+              } else if (button && index === 3) {
+                button.args[0].z = [Object.values(aggregatedResults).map(result => result.nb_successful_reqs)]
+              } else if (button && index === 4) {
+                button.args[0].z = [Object.values(aggregatedResults).map(result => result.nb_reqs - result.nb_successful_reqs)]
+              }
+            });
             Plotly.react('country-plots', newMapData, mapLayout);
           }
         })

@@ -21,9 +21,15 @@ h1 {
   font-style: italic;
 }
 
-.total-plots, .mapAndBoxes {
+.total-plots {
   display: flex;
   justify-content: center;
+}
+
+.mapAndBoxes {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 #total-clients, #total-bytes, #total-requests, #country-plots, #node-checkboxes {
@@ -31,6 +37,7 @@ h1 {
 }
 
 #node-checkboxes {
+  margin-top: 6.6%;
   margin-left: 50px;
   text-align: left;
 }
