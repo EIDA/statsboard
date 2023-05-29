@@ -29,7 +29,9 @@ export function makePlotsNode(startTime, endTime) {
         const pieDataClients = {
           values: data.results.map(result => result.clients),
           labels: data.results.map(result => result.node),
-          type: 'pie'
+          type: 'pie',
+          hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
+          sort: false
         };
         const pieLayoutClients = {
           title: 'Total number of unique users'
@@ -40,7 +42,9 @@ export function makePlotsNode(startTime, endTime) {
         const pieDataBytes = {
           values: data.results.map(result => result.bytes),
           labels: data.results.map(result => result.node),
-          type: 'pie'
+          type: 'pie',
+          hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
+          sort: false
         };
         const pieLayoutBytes = {
           title: 'Total number of bytes'
@@ -53,6 +57,7 @@ export function makePlotsNode(startTime, endTime) {
           values: data.results.map(result => result.nb_reqs),
           labels: data.results.map(result => result.node),
           type: 'pie',
+          hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
           sort: false
         };
         const pieLayoutRequests = {
@@ -126,8 +131,9 @@ export function makePlotsNode(startTime, endTime) {
         .then((response) => response.json())
         .then((data) => {
           // show clients at first
-          const nodes = [...new Set(data.results.map(result => result.node))];
-          const barData = nodes.map(node => {
+          const nodes = ['ICGC', 'UIB-NORSAR', 'NOA', 'NIEP', 'GEOFON', 'ODC', 'ETH', 'KOERI', 'INGV', 'BGR', 'LMU', 'RESIF'];
+          const colors = ['#eb9a49', '#3294b8', '#17becf', '#bcbd22', '#7f7f7f', '#e377c2', '#8c564b', '#9467bd', '#d62728', '#2ca02c', '#ff7f0e', '#1f77b4'];
+          const barData = nodes.map((node, index) => {
               const nodeResults = data.results.filter(result => result.node === node);
               return {
                 x: nodeResults.map(result => result.date),
@@ -137,7 +143,10 @@ export function makePlotsNode(startTime, endTime) {
                 y4: nodeResults.map(result => result.nb_successful_reqs),
                 y5: nodeResults.map(result => result.nb_reqs - result.nb_successful_reqs),
                 name: node,
-                type: 'bar'
+                type: 'bar',
+                marker: {
+                  color: colors[index]
+                }
               }
           });
           let barLayout = {
@@ -258,7 +267,7 @@ export function makePlotsNode(startTime, endTime) {
           else if (details === "month") {
             barLayout.xaxis["dtick"] = "M1";
           }
-          Plotly.newPlot(details+'-plots', barData.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: 'bar'})), barLayout, {displaylogo: false});
+          Plotly.newPlot(details+'-plots', barData.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: 'bar', marker: bar.marker})), barLayout, {displaylogo: false});
         })
         .catch((error) => console.log(error));
     }

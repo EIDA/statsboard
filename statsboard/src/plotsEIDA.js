@@ -44,7 +44,7 @@ export function makePlotsEIDA(startTime, endTime) {
             type: "indicator",
             value: data.results[0].bytes,
             mode: "number",
-            number: { font: { size: 50 } }
+            number: { font: { size: 50 }, valueformat: '.3s' }
           }
         ];
         const indicatorLayoutBytes = {
@@ -58,6 +58,7 @@ export function makePlotsEIDA(startTime, endTime) {
             values: [data.results[0].nb_successful_reqs, data.results[0].nb_reqs - data.results[0].nb_successful_reqs],
             labels: ["Successful Requests", "Unsuccessful Requests"],
             type: "pie",
+            hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>'
           },
         ];
         const pieLayoutRequests = {
