@@ -22,7 +22,24 @@ export function makePlotsEIDA(startTime, endTime) {
   function totalPlots() {
     const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}&format=json`;
     fetch(url)
-      .then((response) => response.json())
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        }
+        else {
+          response.text().then(errorMessage => {
+            if (errorMessage.includes('Internal')) {
+              let totalplots = document.getElementById('error-total');
+              totalplots.innerHTML = "Service is temporarily unavailable. Please try again.";
+            }
+            else if (response.status >= 400 && response.status < 500) {
+              let totalplots = document.getElementById('error-total');
+              totalplots.innerHTML = errorMessage.match(/<p>(.*?)<\/p>/)[0];
+            }
+          });
+          throw Error(response.statusText);
+        }
+      })
       .then((data) => {
         // clients plot
         const indicatorDataClients = [
@@ -66,13 +83,7 @@ export function makePlotsEIDA(startTime, endTime) {
         };
         Plotly.newPlot("total-requests", pieDataRequests, pieLayoutRequests, {displaylogo: false});
       })
-      .catch((error) => {
-        console.log(error);
-        if (error.message.includes('500')) {
-          let totalplots = document.getElementById('error-total');
-          totalplots.innerHTML = "Service is temporarily unavailable. Please try again.";
-        }
-      });
+      .catch((error) => console.log(error));
     }
 
     function monthAndYearPlots(details = "month") {
@@ -84,7 +95,36 @@ export function makePlotsEIDA(startTime, endTime) {
         url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}&details=month&format=json`;
       }
       fetch(url)
-        .then((response) => response.json())
+        .then((response) => {
+          if (response.ok) {
+            return response.json();
+          }
+          else {
+            response.text().then(errorMessage => {
+              if (errorMessage.includes('Internal')) {
+                if (details === "month") {
+                  let monthplots = document.getElementById('error-month');
+                  monthplots.innerHTML = "Service is temporarily unavailable. Please try again.";
+                }
+                else {
+                  let yearplots = document.getElementById('error-year');
+                  yearplots.innerHTML = "Service is temporarily unavailable. Please try again.";
+                }
+              }
+              else if (response.status >= 400 && response.status < 500) {
+                if (details === "month") {
+                  let monthplots = document.getElementById('error-month');
+                  monthplots.innerHTML = errorMessage.match(/<p>(.*?)<\/p>/)[0];
+                }
+                else {
+                  let yearplots = document.getElementById('error-year');
+                  yearplots.innerHTML = errorMessage.match(/<p>(.*?)<\/p>/)[0];
+                }
+              }
+            });
+            throw Error(response.statusText);
+          }
+        })
         .then((data) => {
           // show clients at first
           const barData = [
@@ -181,25 +221,30 @@ export function makePlotsEIDA(startTime, endTime) {
           }
           Plotly.newPlot(details+'-plots', barData, barLayout, {displaylogo: false});
         })
-        .catch((error) => {
-          console.log(error);
-          if (error.message.includes('500')) {
-            if (details === "month") {
-              let monthplots = document.getElementById('error-month');
-              monthplots.innerHTML = "Service is temporarily unavailable. Please try again.";
-            }
-            else {
-              let yearplots = document.getElementById('error-year');
-              yearplots.innerHTML = "Service is temporarily unavailable. Please try again.";
-            }
-          }
-        });
+        .catch((error) => console.log(error));
     }
 
     function mapPlots() {
       const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}&details=country&format=json`;
       fetch(url)
-        .then((response) => response.json())
+        .then((response) => {
+          if (response.ok) {
+            return response.json();
+          }
+          else {
+            response.text().then(errorMessage => {
+              if (errorMessage.includes('Internal')) {
+                let mapplots = document.getElementById('error-map');
+                mapplots.innerHTML = "Service is temporarily unavailable. Please try again.";
+              }
+              else if (response.status >= 400 && response.status < 500) {
+                let mapplots = document.getElementById('error-map');
+                mapplots.innerHTML = errorMessage.match(/<p>(.*?)<\/p>/)[0];
+              }
+            });
+            throw Error(response.statusText);
+          }
+        })
         .then((data) => {
           // convert ISO-2 to ISO-3 country codes
           const iso2ToIso3 = require('country-iso-2-to-3');
@@ -318,13 +363,7 @@ export function makePlotsEIDA(startTime, endTime) {
           };
           Plotly.newPlot('country-plots', mapData, mapLayout, {displaylogo: false});
         })
-        .catch((error) => {
-          console.log(error);
-          if (error.message.includes('500')) {
-            let mapplots = document.getElementById('error-map');
-            mapplots.innerHTML = "Service is temporarily unavailable. Please try again.";
-          }
-        })
+        .catch((error) => console.log(error))
         .finally(() => {
           // remove loading message
           clearInterval(intervalId);

@@ -1,7 +1,7 @@
 import Plotly from 'plotly.js-dist';
 import ReactDOM from 'react-dom/client';
 
-export function makePlotsNode(startTime, endTime) {
+export function makePlotsNode(startTime, endTime, node) {
 
   // show message while loading
   let loadingMsg = document.getElementById("loading-msg");
@@ -21,15 +21,46 @@ export function makePlotsNode(startTime, endTime) {
   mapPlots();
 
   function totalPlots() {
-    const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}&level=node&format=json`;
+    const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}&level=node&format=json`;
     fetch(url)
-      .then((response) => response.json())
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        }
+        else {
+          response.text().then(errorMessage => {
+            if (errorMessage.includes('Internal')) {
+              let totalplots = document.getElementById('error-total');
+              totalplots.innerHTML = "Service is temporarily unavailable. Please try again.";
+            }
+            else if (response.status >= 400 && response.status < 500) {
+              let totalplots = document.getElementById('error-total');
+              totalplots.innerHTML = errorMessage.match(/<p>(.*?)<\/p>/)[0];
+            }
+          });
+          throw Error(response.statusText);
+        }
+      })
       .then((data) => {
+        // rearrange results and colors
+        let nodesColors = {'RESIF': '#1f77b4', 'LMU': '#ff7f0e', 'BGR': '#2ca02c', 'INGV': '#d62728', 'KOERI': '#9467bd', 'ETH': '#8c564b', 'ODC': '#e377c2', 'GEOFON': '#7f7f7f', 'NIEP': '#bcbd22', 'NOA': '#17becf', 'UIB-NORSAR': '#3294b8', 'ICGC': '#eb9a49'};
+        for (const node in nodesColors) {
+          if (!data.results.map(result => result.node).includes(node)) {
+            delete nodesColors[node];
+          }
+        }
+        const rearrangedResults = data.results.sort((a, b) => {
+          return Object.keys(nodesColors).indexOf(a.node) - Object.keys(nodesColors).indexOf(b.node);
+        });
+
         // clients plot
         const pieDataClients = {
-          values: data.results.map(result => result.clients),
-          labels: data.results.map(result => result.node),
+          values: rearrangedResults.map(result => result.clients),
+          labels: Object.keys(nodesColors),
           type: 'pie',
+          marker: {
+            colors: Object.values(nodesColors)
+          },
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
           sort: false
         };
@@ -40,9 +71,12 @@ export function makePlotsNode(startTime, endTime) {
 
         // bytes plot
         const pieDataBytes = {
-          values: data.results.map(result => result.bytes),
-          labels: data.results.map(result => result.node),
+          values: rearrangedResults.map(result => result.bytes),
+          labels: Object.keys(nodesColors),
           type: 'pie',
+          marker: {
+            colors: Object.values(nodesColors)
+          },
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
           sort: false
         };
@@ -54,9 +88,12 @@ export function makePlotsNode(startTime, endTime) {
         // requests plot
         // show total requests at first
         const pieDataRequests = {
-          values: data.results.map(result => result.nb_reqs),
-          labels: data.results.map(result => result.node),
+          values: rearrangedResults.map(result => result.nb_reqs),
+          labels: Object.keys(nodesColors),
           type: 'pie',
+          marker: {
+            colors: Object.values(nodesColors)
+          },
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
           sort: false
         };
@@ -68,7 +105,7 @@ export function makePlotsNode(startTime, endTime) {
               {
                 args: [
                   {
-                    values: [data.results.map(result => result.nb_reqs)],
+                    values: [rearrangedResults.map(result => result.nb_reqs)],
                     type: 'pie',
                     sort: false
                   },
@@ -83,7 +120,7 @@ export function makePlotsNode(startTime, endTime) {
               {
                 args: [
                   {
-                    values: [data.results.map(result => result.nb_successful_reqs)],
+                    values: [rearrangedResults.map(result => result.nb_successful_reqs)],
                     type: 'pie',
                     sort: false
                   },
@@ -98,7 +135,7 @@ export function makePlotsNode(startTime, endTime) {
               {
                 args: [
                   {
-                    values: [data.results.map(result => result.nb_reqs - result.nb_successful_reqs)],
+                    values: [rearrangedResults.map(result => result.nb_reqs - result.nb_successful_reqs)],
                     type: 'pie',
                     sort: false
                   },
@@ -116,25 +153,48 @@ export function makePlotsNode(startTime, endTime) {
         };
         Plotly.newPlot('total-requests', [pieDataRequests], pieLayoutRequests, {displaylogo: false});
       })
-      .catch((error) => {
-        console.log(error);
-        if (error.message.includes('500')) {
-          let totalplots = document.getElementById('error-total');
-          totalplots.innerHTML = "Service is temporarily unavailable. Please try again.";
-        }
-      });
+      .catch((error) => console.log(error));
     }
 
     function monthAndYearPlots(details = "month") {
       let url = null;
       if (details === "year") {
-        url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}&level=node&details=year&format=json`;
+        url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}&level=node&details=year&format=json`;
       }
       else {
-        url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}&level=node&details=month&format=json`;
+        url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}&level=node&details=month&format=json`;
       }
       fetch(url)
-        .then((response) => response.json())
+        .then((response) => {
+          if (response.ok) {
+            return response.json();
+          }
+          else {
+            response.text().then(errorMessage => {
+              if (errorMessage.includes('Internal')) {
+                if (details === "month") {
+                  let monthplots = document.getElementById('error-month');
+                  monthplots.innerHTML = "Service is temporarily unavailable. Please try again.";
+                }
+                else {
+                  let yearplots = document.getElementById('error-year');
+                  yearplots.innerHTML = "Service is temporarily unavailable. Please try again.";
+                }
+              }
+              else if (response.status >= 400 && response.status < 500) {
+                if (details === "month") {
+                  let monthplots = document.getElementById('error-month');
+                  monthplots.innerHTML = errorMessage.match(/<p>(.*?)<\/p>/)[0];
+                }
+                else {
+                  let yearplots = document.getElementById('error-year');
+                  yearplots.innerHTML = errorMessage.match(/<p>(.*?)<\/p>/)[0];
+                }
+              }
+            });
+            throw Error(response.statusText);
+          }
+        })
         .then((data) => {
           // show clients at first
           const nodes = ['ICGC', 'UIB-NORSAR', 'NOA', 'NIEP', 'GEOFON', 'ODC', 'ETH', 'KOERI', 'INGV', 'BGR', 'LMU', 'RESIF'];
@@ -275,25 +335,30 @@ export function makePlotsNode(startTime, endTime) {
           }
           Plotly.newPlot(details+'-plots', barData.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: 'bar', marker: bar.marker})), barLayout, {displaylogo: false});
         })
-        .catch((error) => {
-          console.log(error);
-          if (error.message.includes('500')) {
-            if (details === "month") {
-              let monthplots = document.getElementById('error-month');
-              monthplots.innerHTML = "Service is temporarily unavailable. Please try again.";
-            }
-            else {
-              let yearplots = document.getElementById('error-year');
-              yearplots.innerHTML = "Service is temporarily unavailable. Please try again.";
-            }
-          }
-        });
+        .catch((error) => console.log(error));
     }
 
     function mapPlots() {
-      const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}&level=node&details=country&format=json`;
+      const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}&level=node&details=country&format=json`;
       fetch(url)
-        .then((response) => response.json())
+        .then((response) => {
+          if (response.ok) {
+            return response.json();
+          }
+          else {
+            response.text().then(errorMessage => {
+              if (errorMessage.includes('Internal')) {
+                let mapplots = document.getElementById('error-map');
+                mapplots.innerHTML = "Service is temporarily unavailable. Please try again.";
+              }
+              else if (response.status >= 400 && response.status < 500) {
+                let mapplots = document.getElementById('error-map');
+                mapplots.innerHTML = errorMessage.match(/<p>(.*?)<\/p>/)[0];
+              }
+            });
+            throw Error(response.statusText);
+          }
+        })
         .then((data) => {
           // aggregate the results per country
           let aggregatedResults = data.results.reduce((aggregate, result) => {
@@ -430,7 +495,7 @@ export function makePlotsNode(startTime, endTime) {
           };
           Plotly.newPlot('country-plots', mapData, mapLayout, {displaylogo: false});
 
-          const nodes = [...new Set(data.results.map(result => result.node))];
+          const nodes = ['RESIF', 'LMU', 'BGR', 'INGV', 'KOERI', 'ETH', 'ODC', 'GEOFON', 'NIEP', 'NOA', 'UIB-NORSAR', 'ICGC'];
           let nodeCheckboxes = nodes.map((node, index) => (
             <div key={index}>
               <input type="checkbox" id={`node-${index}`} value={node} defaultChecked onChange={handleCheckboxClick} />
@@ -527,13 +592,7 @@ export function makePlotsNode(startTime, endTime) {
             Plotly.react('country-plots', newMapData, mapLayout);
           }
         })
-        .catch((error) => {
-          console.log(error);
-          if (error.message.includes('500')) {
-            let mapplots = document.getElementById('error-map');
-            mapplots.innerHTML = "Service is temporarily unavailable. Please try again.";
-          }
-        })
+        .catch((error) => console.log(error))
         .finally(() => {
           // remove loading message
           clearInterval(intervalId);

@@ -11,24 +11,27 @@ function App() {
   const [endTime, setEndTime] = useState(undefined);
   const [level, setLevel] = useState("eida");
   const [showError, setShowError] = useState("");
+  const [node, setNode] = useState(""); // Add this line
 
   function handleClick() {
-    // clear potential previous error messages
-    let totalplots = document.getElementById('error-total');
-    totalplots.innerHTML = "";
-    let monthplots = document.getElementById('error-month');
-    monthplots.innerHTML = "";
-    let yearplots = document.getElementById('error-year');
-    yearplots.innerHTML = "";
-    let mapplots = document.getElementById('error-map');
-    mapplots.innerHTML = "";
-    // clear plots
-    Plotly.purge('total-clients');
-    Plotly.purge('total-bytes');
-    Plotly.purge('total-requests');
-    Plotly.purge('month-plots');
-    Plotly.purge('year-plots');
-    Plotly.purge('country-plots');
+    if (!showError) {
+      // clear potential previous error messages
+      let totalplots = document.getElementById('error-total');
+      totalplots.innerHTML = "";
+      let monthplots = document.getElementById('error-month');
+      monthplots.innerHTML = "";
+      let yearplots = document.getElementById('error-year');
+      yearplots.innerHTML = "";
+      let mapplots = document.getElementById('error-map');
+      mapplots.innerHTML = "";
+      // clear plots
+      Plotly.purge('total-clients');
+      Plotly.purge('total-bytes');
+      Plotly.purge('total-requests');
+      Plotly.purge('month-plots');
+      Plotly.purge('year-plots');
+      Plotly.purge('country-plots');
+    }
     // clear checkboxes for map plot
     const nodeCheckboxesContainer = document.getElementById('node-checkboxes');
     if (nodeCheckboxesContainer) {
@@ -48,7 +51,7 @@ function App() {
           makePlotsEIDA(startTime, endTime);
           break;
         case "node":
-          makePlotsNode(startTime, endTime);
+          makePlotsNode(startTime, endTime, node);
           break;
         default:
           setShowError("Plots below Node level are not implemented yet!");
@@ -61,7 +64,7 @@ function App() {
     <div className="App">
       <h1>EIDA Statistics Dashboard</h1>
       <div className="info">
-        This is dashboard UI which allows users to explore <a href="http://www.orfeus-eu.org/data/eida/">EIDA</a> usage statistics in the form of plots.
+        This is a dashboard UI which allows users to explore <a href="http://www.orfeus-eu.org/data/eida/">EIDA</a> usage statistics in the form of plots.
         For more details, visit the <a href="https://ws.resif.fr/eidaws/statistics/1/">statistics webservice.</a>
       </div>
       <div>
@@ -100,6 +103,12 @@ function App() {
           </>
         )}
       </div>
+      {level === "node" && (
+        <div>
+          <label>Node: </label>
+          <input type="text" value={node} onChange={e => setNode(e.target.value)} />
+        </div>
+      )}
       <button onClick={handleClick}>Make Plots</button>
       {showError && (
         <div className="error-message">
