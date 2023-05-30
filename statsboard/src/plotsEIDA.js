@@ -66,7 +66,13 @@ export function makePlotsEIDA(startTime, endTime) {
         };
         Plotly.newPlot("total-requests", pieDataRequests, pieLayoutRequests, {displaylogo: false});
       })
-      .catch((error) => console.log(error));
+      .catch((error) => {
+        console.log(error);
+        if (error.message.includes('500')) {
+          let totalplots = document.getElementById('error-total');
+          totalplots.innerHTML = "Service is temporarily unavailable. Please try again.";
+        }
+      });
     }
 
     function monthAndYearPlots(details = "month") {
@@ -175,7 +181,19 @@ export function makePlotsEIDA(startTime, endTime) {
           }
           Plotly.newPlot(details+'-plots', barData, barLayout, {displaylogo: false});
         })
-        .catch((error) => console.log(error));
+        .catch((error) => {
+          console.log(error);
+          if (error.message.includes('500')) {
+            if (details === "month") {
+              let monthplots = document.getElementById('error-month');
+              monthplots.innerHTML = "Service is temporarily unavailable. Please try again.";
+            }
+            else {
+              let yearplots = document.getElementById('error-year');
+              yearplots.innerHTML = "Service is temporarily unavailable. Please try again.";
+            }
+          }
+        });
     }
 
     function mapPlots() {
@@ -300,7 +318,13 @@ export function makePlotsEIDA(startTime, endTime) {
           };
           Plotly.newPlot('country-plots', mapData, mapLayout, {displaylogo: false});
         })
-        .catch((error) => console.log(error))
+        .catch((error) => {
+          console.log(error);
+          if (error.message.includes('500')) {
+            let mapplots = document.getElementById('error-map');
+            mapplots.innerHTML = "Service is temporarily unavailable. Please try again.";
+          }
+        })
         .finally(() => {
           // remove loading message
           clearInterval(intervalId);

@@ -1,5 +1,6 @@
 import './App.css';
 import { useState } from 'react';
+import Plotly from 'plotly.js-dist';
 import { makePlotsEIDA } from './plotsEIDA.js';
 import { makePlotsNode } from './plotsNode.js';
 
@@ -12,14 +13,33 @@ function App() {
   const [showError, setShowError] = useState("");
 
   function handleClick() {
+    // clear potential previous error messages
+    let totalplots = document.getElementById('error-total');
+    totalplots.innerHTML = "";
+    let monthplots = document.getElementById('error-month');
+    monthplots.innerHTML = "";
+    let yearplots = document.getElementById('error-year');
+    yearplots.innerHTML = "";
+    let mapplots = document.getElementById('error-map');
+    mapplots.innerHTML = "";
+    // clear plots
+    Plotly.purge('total-clients');
+    Plotly.purge('total-bytes');
+    Plotly.purge('total-requests');
+    Plotly.purge('month-plots');
+    Plotly.purge('year-plots');
+    Plotly.purge('country-plots');
+    // clear checkboxes for map plot
     const nodeCheckboxesContainer = document.getElementById('node-checkboxes');
     if (nodeCheckboxesContainer) {
       nodeCheckboxesContainer.innerHTML = '';
     }
+    // show error and stop execution if start time not specified by user
     if (!startTime) {
       setShowError("Specify at least 'Start time' parameter!");
       return;
     }
+    // otherwise clear error message
     setShowError("");
     // delay execution to allow React to update the page and create the loading-msg element, otherwise error pops up
     setTimeout(() => {
@@ -89,16 +109,28 @@ function App() {
       {!showError && (
         <>
           <div id="loading-msg"></div>
-          <div className="total-plots">
-            <div id="total-clients"></div>
-            <div id="total-bytes"></div>
-            <div id="total-requests"></div>
+          <div className="total-wrapper">
+            <div className="error-plot" id="error-total"></div>
+            <div className="total-plots">
+              <div id="total-clients"></div>
+              <div id="total-bytes"></div>
+              <div id="total-requests"></div>
+            </div>
           </div>
-          <div id="month-plots"></div>
-          <div id="year-plots"></div>
-          <div className="mapAndBoxes">
-            <div id="country-plots"></div>
-            <div id="node-checkboxes"></div>
+          <div className="month-wrapper">
+            <div className="error-plot" id="error-month"></div>
+            <div id="month-plots"></div>
+          </div>
+          <div className="year-wrapper">
+            <div className="error-plot" id="error-year"></div>
+            <div id="year-plots"></div>
+          </div>
+          <div className="map-wrapper">
+            <div className="error-plot" id="error-map"></div>
+            <div className="mapAndBoxes">
+              <div id="country-plots"></div>
+              <div id="node-checkboxes"></div>
+            </div>
           </div>
         </>
       )}
