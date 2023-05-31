@@ -15,6 +15,20 @@ export function makePlotsNode(startTime, endTime, node) {
   }
   const intervalId = setInterval(flashLoadingMessage, 500);
 
+  // make a call to retrieve list of nodes
+  let nodesColors = {};
+  const colors = ["#7eed89", "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf", "#3294b8", "#eb9a49", "#f5ed53", "#291200"];
+  fetch('https://ws.resif.fr/eidaws/statistics/1/nodes')
+    .then((response) => response.json())
+    .then((data) => {
+      const nodes = data.nodes.map(node => node.name).sort();
+      for (let i = 0; i < nodes.length && i < colors.length; i++) {
+        nodesColors[nodes[i]] = colors[i];
+      }
+      console.log(nodesColors);
+    })
+    .catch((error) => console.log(error));
+
   totalPlots();
   monthAndYearPlots("month");
   monthAndYearPlots("year");
@@ -43,7 +57,6 @@ export function makePlotsNode(startTime, endTime, node) {
       })
       .then((data) => {
         // rearrange results and colors
-        let nodesColors = {'RESIF': '#1f77b4', 'LMU': '#ff7f0e', 'BGR': '#2ca02c', 'INGV': '#d62728', 'KOERI': '#9467bd', 'ETH': '#8c564b', 'ODC': '#e377c2', 'GEOFON': '#7f7f7f', 'NIEP': '#bcbd22', 'NOA': '#17becf', 'UIB-NORSAR': '#3294b8', 'ICGC': '#eb9a49'};
         for (const node in nodesColors) {
           if (!data.results.map(result => result.node).includes(node)) {
             delete nodesColors[node];
@@ -197,9 +210,7 @@ export function makePlotsNode(startTime, endTime, node) {
         })
         .then((data) => {
           // show clients at first
-          const nodes = ['ICGC', 'UIB-NORSAR', 'NOA', 'NIEP', 'GEOFON', 'ODC', 'ETH', 'KOERI', 'INGV', 'BGR', 'LMU', 'RESIF'];
-          const colors = ['#eb9a49', '#3294b8', '#17becf', '#bcbd22', '#7f7f7f', '#e377c2', '#8c564b', '#9467bd', '#d62728', '#2ca02c', '#ff7f0e', '#1f77b4'];
-          const barData = nodes.map((node, index) => {
+          const barData = Object.keys(nodesColors).reverse().map((node, index) => {
               const nodeResults = data.results.filter(result => result.node === node);
               return {
                 x: nodeResults.map(result => result.date),
@@ -211,7 +222,7 @@ export function makePlotsNode(startTime, endTime, node) {
                 name: node,
                 type: 'bar',
                 marker: {
-                  color: colors[index]
+                  color: nodesColors[node]
                 }
               }
           });
@@ -233,7 +244,7 @@ export function makePlotsNode(startTime, endTime, node) {
                     {
                       x: barData.map(bar => bar.x),
                       y: barData.map(bar => bar.y1),
-                      name: nodes,
+                      name: Object.keys(nodesColors).reverse(),
                       type: 'bar'
                     },
                     {
@@ -252,7 +263,7 @@ export function makePlotsNode(startTime, endTime, node) {
                     {
                       x: barData.map(bar => bar.x),
                       y: barData.map(bar => bar.y2),
-                      name: nodes,
+                      name: Object.keys(nodesColors).reverse(),
                       type: 'bar'
                     },
                     {
@@ -271,7 +282,7 @@ export function makePlotsNode(startTime, endTime, node) {
                     {
                       x: barData.map(bar => bar.x),
                       y: barData.map(bar => bar.y3),
-                      name: nodes,
+                      name: Object.keys(nodesColors).reverse(),
                       type: 'bar'
                     },
                     {
@@ -290,7 +301,7 @@ export function makePlotsNode(startTime, endTime, node) {
                     {
                       x: barData.map(bar => bar.x),
                       y: barData.map(bar => bar.y4),
-                      name: nodes,
+                      name: Object.keys(nodesColors).reverse(),
                       type: 'bar'
                     },
                     {
@@ -309,7 +320,7 @@ export function makePlotsNode(startTime, endTime, node) {
                     {
                       x: barData.map(bar => bar.x),
                       y: barData.map(bar => bar.y5),
-                      name: nodes,
+                      name: Object.keys(nodesColors).reverse(),
                       type: 'bar'
                     },
                     {
@@ -495,8 +506,7 @@ export function makePlotsNode(startTime, endTime, node) {
           };
           Plotly.newPlot('country-plots', mapData, mapLayout, {displaylogo: false});
 
-          const nodes = ['RESIF', 'LMU', 'BGR', 'INGV', 'KOERI', 'ETH', 'ODC', 'GEOFON', 'NIEP', 'NOA', 'UIB-NORSAR', 'ICGC'];
-          let nodeCheckboxes = nodes.map((node, index) => (
+          let nodeCheckboxes = Object.keys(nodesColors).map((node, index) => (
             <div key={index}>
               <input type="checkbox" id={`node-${index}`} value={node} defaultChecked onChange={handleCheckboxClick} />
               <label htmlFor={`node-${index}`}>{node}</label>
