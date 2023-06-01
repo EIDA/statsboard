@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Plotly from 'plotly.js-dist';
 import { makePlotsEIDA } from './plotsEIDA.js';
 import { makePlotsNode } from './plotsNode.js';
+import { makePlotsNetwork } from './plotsNetwork.js';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -11,7 +12,8 @@ function App() {
   const [endTime, setEndTime] = useState(undefined);
   const [level, setLevel] = useState("eida");
   const [showError, setShowError] = useState("");
-  const [node, setNode] = useState(""); // Add this line
+  const [node, setNode] = useState("");
+  const [network, setNetwork] = useState("");
 
   function handleClick() {
     if (!showError) {
@@ -53,8 +55,11 @@ function App() {
         case "node":
           makePlotsNode(startTime, endTime, node);
           break;
+        case "network":
+          makePlotsNetwork(startTime, endTime, node, network)
+          break;
         default:
-          setShowError("Plots below Node level are not implemented yet!");
+          setShowError("Plots for Station level are not implemented yet!");
           return;
       }
     }, 200);
@@ -103,10 +108,16 @@ function App() {
           </>
         )}
       </div>
-      {level === "node" && (
+      {level !== "eida" && (
         <div>
           <label>Node: </label>
           <input type="text" value={node} onChange={e => setNode(e.target.value)} />
+        </div>
+      )}
+      {level === "network" && (
+        <div>
+          <label>Network: </label>
+          <input type="text" value={network} onChange={e => setNetwork(e.target.value)} />
         </div>
       )}
       <button onClick={handleClick}>Make Plots</button>
