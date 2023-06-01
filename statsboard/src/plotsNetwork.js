@@ -1,7 +1,7 @@
 import Plotly from 'plotly.js-dist';
 import ReactDOM from 'react-dom/client';
 
-export function makePlotsNode(startTime, endTime, node) {
+export function makePlotsNetwork(startTime, endTime, node, network) {
 
   // show message while loading
   let loadingMsg = document.getElementById("loading-msg");
@@ -15,16 +15,12 @@ export function makePlotsNode(startTime, endTime, node) {
   }
   const intervalId = setInterval(flashLoadingMessage, 500);
 
-  // make a call to retrieve list of nodes
-  let nodesColors = {};
-  const colors = ["#7eed89", "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf", "#3294b8", "#eb9a49", "#f5ed53", "#291200"];
-  fetch('https://ws.resif.fr/eidaws/statistics/1/nodes')
+  // make a call to retrieve list of networks
+  let networks = [];
+  fetch('https://ws.resif.fr/eidaws/statistics/1/networks')
     .then((response) => response.json())
     .then((data) => {
-      const nodes = data.nodes.map(node => node.name).sort();
-      for (let i = 0; i < nodes.length && i < colors.length; i++) {
-        nodesColors[nodes[i]] = colors[i];
-      }
+      networks = data.networks.map(network => network.name);
     })
     .catch((error) => console.log(error));
 
@@ -34,7 +30,7 @@ export function makePlotsNode(startTime, endTime, node) {
   mapPlots();
 
   function totalPlots() {
-    const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}&level=node&format=json`;
+    const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}${network ? `&network=${network}` : ''}&level=network&format=json`;
     fetch(url)
       .then((response) => {
         if (response.ok) {
@@ -55,24 +51,11 @@ export function makePlotsNode(startTime, endTime, node) {
         }
       })
       .then((data) => {
-        // rearrange results and colors
-        for (const node in nodesColors) {
-          if (!data.results.map(result => result.node).includes(node)) {
-            delete nodesColors[node];
-          }
-        }
-        const rearrangedResults = data.results.sort((a, b) => {
-          return Object.keys(nodesColors).indexOf(a.node) - Object.keys(nodesColors).indexOf(b.node);
-        });
-
         // clients plot
         const pieDataClients = {
-          values: rearrangedResults.map(result => result.clients),
-          labels: Object.keys(nodesColors),
+          values: data.results.map(result => result.clients),
+          labels: data.results.map(result => result.network),
           type: 'pie',
-          marker: {
-            colors: Object.values(nodesColors)
-          },
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
           sort: false
         };
@@ -83,12 +66,9 @@ export function makePlotsNode(startTime, endTime, node) {
 
         // bytes plot
         const pieDataBytes = {
-          values: rearrangedResults.map(result => result.bytes),
-          labels: Object.keys(nodesColors),
+          values: data.results.map(result => result.bytes),
+          labels: data.results.map(result => result.network),
           type: 'pie',
-          marker: {
-            colors: Object.values(nodesColors)
-          },
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
           sort: false
         };
@@ -100,12 +80,9 @@ export function makePlotsNode(startTime, endTime, node) {
         // requests plot
         // show total requests at first
         const pieDataRequests = {
-          values: rearrangedResults.map(result => result.nb_reqs),
-          labels: Object.keys(nodesColors),
+          values: data.results.map(result => result.nb_reqs),
+          labels: data.results.map(result => result.network),
           type: 'pie',
-          marker: {
-            colors: Object.values(nodesColors)
-          },
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
           sort: false
         };
@@ -117,7 +94,7 @@ export function makePlotsNode(startTime, endTime, node) {
               {
                 args: [
                   {
-                    values: [rearrangedResults.map(result => result.nb_reqs)],
+                    values: [data.results.map(result => result.nb_reqs)],
                     type: 'pie',
                     sort: false
                   },
@@ -132,7 +109,7 @@ export function makePlotsNode(startTime, endTime, node) {
               {
                 args: [
                   {
-                    values: [rearrangedResults.map(result => result.nb_successful_reqs)],
+                    values: [data.results.map(result => result.nb_successful_reqs)],
                     type: 'pie',
                     sort: false
                   },
@@ -147,7 +124,7 @@ export function makePlotsNode(startTime, endTime, node) {
               {
                 args: [
                   {
-                    values: [rearrangedResults.map(result => result.nb_reqs - result.nb_successful_reqs)],
+                    values: [data.results.map(result => result.nb_reqs - result.nb_successful_reqs)],
                     type: 'pie',
                     sort: false
                   },
@@ -171,10 +148,10 @@ export function makePlotsNode(startTime, endTime, node) {
     function monthAndYearPlots(details = "month") {
       let url = null;
       if (details === "year") {
-        url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}&level=node&details=year&format=json`;
+        url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}${network ? `&network=${network}` : ''}&level=node&details=year&format=json`;
       }
       else {
-        url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}&level=node&details=month&format=json`;
+        url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}${network ? `&network=${network}` : ''}&level=node&details=month&format=json`;
       }
       fetch(url)
         .then((response) => {
@@ -209,20 +186,17 @@ export function makePlotsNode(startTime, endTime, node) {
         })
         .then((data) => {
           // show clients at first
-          const barData = Object.keys(nodesColors).reverse().map((node, index) => {
-              const nodeResults = data.results.filter(result => result.node === node);
+          const barData = networks.reverse().map((network, index) => {
+              const networkResults = data.results.filter(result => result.network === network);
               return {
-                x: nodeResults.map(result => result.date),
-                y1: nodeResults.map(result => result.clients),
-                y2: nodeResults.map(result => result.bytes),
-                y3: nodeResults.map(result => result.nb_reqs),
-                y4: nodeResults.map(result => result.nb_successful_reqs),
-                y5: nodeResults.map(result => result.nb_reqs - result.nb_successful_reqs),
-                name: node,
-                type: 'bar',
-                marker: {
-                  color: nodesColors[node]
-                }
+                x: networkResults.map(result => result.date),
+                y1: networkResults.map(result => result.clients),
+                y2: networkResults.map(result => result.bytes),
+                y3: networkResults.map(result => result.nb_reqs),
+                y4: networkResults.map(result => result.nb_successful_reqs),
+                y5: networkResults.map(result => result.nb_reqs - result.nb_successful_reqs),
+                name: network,
+                type: 'bar'
               }
           });
           let barLayout = {
@@ -243,7 +217,7 @@ export function makePlotsNode(startTime, endTime, node) {
                     {
                       x: barData.map(bar => bar.x),
                       y: barData.map(bar => bar.y1),
-                      name: Object.keys(nodesColors).reverse(),
+                      name: networks.reverse(),
                       type: 'bar'
                     },
                     {
@@ -262,7 +236,7 @@ export function makePlotsNode(startTime, endTime, node) {
                     {
                       x: barData.map(bar => bar.x),
                       y: barData.map(bar => bar.y2),
-                      name: Object.keys(nodesColors).reverse(),
+                      name: networks.reverse(),
                       type: 'bar'
                     },
                     {
@@ -281,7 +255,7 @@ export function makePlotsNode(startTime, endTime, node) {
                     {
                       x: barData.map(bar => bar.x),
                       y: barData.map(bar => bar.y3),
-                      name: Object.keys(nodesColors).reverse(),
+                      name: networks.reverse(),
                       type: 'bar'
                     },
                     {
@@ -300,7 +274,7 @@ export function makePlotsNode(startTime, endTime, node) {
                     {
                       x: barData.map(bar => bar.x),
                       y: barData.map(bar => bar.y4),
-                      name: Object.keys(nodesColors).reverse(),
+                      name: networks.reverse(),
                       type: 'bar'
                     },
                     {
@@ -319,7 +293,7 @@ export function makePlotsNode(startTime, endTime, node) {
                     {
                       x: barData.map(bar => bar.x),
                       y: barData.map(bar => bar.y5),
-                      name: Object.keys(nodesColors).reverse(),
+                      name: networks.reverse(),
                       type: 'bar'
                     },
                     {
@@ -343,13 +317,13 @@ export function makePlotsNode(startTime, endTime, node) {
           else if (details === "month") {
             barLayout.xaxis["dtick"] = "M1";
           }
-          Plotly.newPlot(details+'-plots', barData.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: 'bar', marker: bar.marker})), barLayout, {displaylogo: false});
+          Plotly.newPlot(details+'-plots', barData.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: 'bar'})), barLayout, {displaylogo: false});
         })
         .catch((error) => console.log(error));
     }
 
     function mapPlots() {
-      const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}&level=node&details=country&format=json`;
+      const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}${network ? `&network=${network}` : ''}&level=node&details=country&format=json`;
       fetch(url)
         .then((response) => {
           if (response.ok) {
@@ -505,15 +479,15 @@ export function makePlotsNode(startTime, endTime, node) {
           };
           Plotly.newPlot('country-plots', mapData, mapLayout, {displaylogo: false});
 
-          let nodeCheckboxes = Object.keys(nodesColors).map((node, index) => (
+          let networkCheckboxes = networks.map((network, index) => (
             <div key={index}>
-              <input type="checkbox" id={`node-${index}`} value={node} defaultChecked onChange={handleCheckboxClick} />
-              <label htmlFor={`node-${index}`}>{node}</label>
+              <input type="checkbox" id={`network-${index}`} value={network} defaultChecked onChange={handleCheckboxClick} />
+              <label htmlFor={`network-${index}`}>{network}</label>
             </div>
           ));
-          const nodeCheckboxesContainer = document.getElementById('node-checkboxes');
-          nodeCheckboxesContainer.innerHTML = '';
-          ReactDOM.createRoot(nodeCheckboxesContainer).render(nodeCheckboxes);
+          const networkCheckboxesContainer = document.getElementById('network-checkboxes');
+          networkCheckboxesContainer.innerHTML = '';
+          ReactDOM.createRoot(networkCheckboxesContainer).render(networkCheckboxes);
           let lastClickedTime = 0;
           let lastClickedCheckbox = null;
           function handleCheckboxClick(event) {
@@ -521,8 +495,8 @@ export function makePlotsNode(startTime, endTime, node) {
             const checkbox = event.target;
             const currentTime = new Date().getTime();
             const timeDiff = currentTime - lastClickedTime;
-            const checkboxes = document.querySelectorAll('#node-checkboxes input[type="checkbox"]');
-            const checkedCount = document.querySelectorAll('#node-checkboxes input[type="checkbox"]:checked').length;
+            const checkboxes = document.querySelectorAll('#network-checkboxes input[type="checkbox"]');
+            const checkedCount = document.querySelectorAll('#network-checkboxes input[type="checkbox"]:checked').length;
             if (checkbox === lastClickedCheckbox && timeDiff < 300) {
               if (checkedCount === 1 && checkbox.checked) {
                 checkboxes.forEach((cb) => {
@@ -538,12 +512,12 @@ export function makePlotsNode(startTime, endTime, node) {
             lastClickedCheckbox = checkbox;
             lastClickedTime = currentTime;
             // now update the plot with appropriate data
-            const checked = document.querySelectorAll('#node-checkboxes input[type="checkbox"]:checked');
-            const selectedNodes = [];
+            const checked = document.querySelectorAll('#network-checkboxes input[type="checkbox"]:checked');
+            const selectedNetworks = [];
             checked.forEach((cb) => {
-              selectedNodes.push(cb.value);
+              selectedNetworks.push(cb.value);
             })
-            const filteredData = data.results.filter((result) => selectedNodes.includes(result.node));
+            const filteredData = data.results.filter((result) => selectedNetworks.includes(result.network));
             aggregatedResults = filteredData.reduce((aggregate, result) => {
               if (!aggregate[result.country]) {
                 aggregate[result.country] = {
