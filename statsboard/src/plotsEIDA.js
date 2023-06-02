@@ -28,7 +28,7 @@ export function makePlotsEIDA(startTime, endTime) {
         }
         else {
           response.text().then(errorMessage => {
-            if (errorMessage.includes('Internal')) {
+            if (errorMessage.includes('Internal') || errorMessage.includes('Time-out')) {
               let totalplots = document.getElementById('error-total');
               totalplots.innerHTML = "Service is temporarily unavailable. Please try again.";
             }
@@ -101,7 +101,7 @@ export function makePlotsEIDA(startTime, endTime) {
           }
           else {
             response.text().then(errorMessage => {
-              if (errorMessage.includes('Internal')) {
+              if (errorMessage.includes('Internal') || errorMessage.includes('Time-out')) {
                 if (details === "month") {
                   let monthplots = document.getElementById('error-month');
                   monthplots.innerHTML = "Service is temporarily unavailable. Please try again.";
@@ -233,7 +233,7 @@ export function makePlotsEIDA(startTime, endTime) {
           }
           else {
             response.text().then(errorMessage => {
-              if (errorMessage.includes('Internal')) {
+              if (errorMessage.includes('Internal') || errorMessage.includes('Time-out')) {
                 let mapplots = document.getElementById('error-map');
                 mapplots.innerHTML = "Service is temporarily unavailable. Please try again.";
               }
