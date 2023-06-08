@@ -1,5 +1,6 @@
 import Plotly from 'plotly.js-dist';
 import ReactDOM from 'react-dom/client';
+import {HLL, fromHexString} from './js_hll'
 
 export function makePlotsNode(startTime, endTime, node) {
 
@@ -17,7 +18,20 @@ export function makePlotsNode(startTime, endTime, node) {
 
   // make a call to retrieve list of nodes
   fetch('https://ws.resif.fr/eidaws/statistics/1/nodes')
-    .then((response) => response.json())
+    .then((response) => {
+      if (response.ok) {
+        return response.json();
+      }
+      else {
+        response.text().then(errorMessage => {
+          if (errorMessage.includes('Internal') || errorMessage.includes('Time-out')) {
+            let totalplots = document.getElementById('error-total');
+            totalplots.innerHTML = "Service is temporarily unavailable. Please try again.";
+          }
+        });
+        throw Error(response.statusText);
+      }
+    })
     .then((data) => {
       const nodes = data.nodes.map(node => node.name).sort();
       const colors = ["#7eed89", "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf", "#3294b8", "#eb9a49", "#f5ed53", "#291200"];
@@ -32,7 +46,7 @@ export function makePlotsNode(startTime, endTime, node) {
       mapPlots();
 
       function totalPlots() {
-        const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}&level=node&format=json`;
+        const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}&level=node&hllvalues=true&format=json`;
         fetch(url)
           .then((response) => {
             if (response.ok) {
@@ -62,8 +76,12 @@ export function makePlotsNode(startTime, endTime, node) {
             const rearrangedResults = data.results.sort((a, b) => {
               return Object.keys(nodesColors).indexOf(a.node) - Object.keys(nodesColors).indexOf(b.node);
             });
-
-            // clients plot
+            // calculate hll values for total clients all nodes indicator plot
+            let hll = new HLL(11, 5);
+            data.results.forEach((result) => {
+              hll.union(fromHexString(result.hll_clients).hllSet);
+            });
+            // clients plot, per node pie at first
             const pieDataClients = {
               values: rearrangedResults.map(result => result.clients),
               labels: Object.keys(nodesColors),
@@ -78,7 +96,7 @@ export function makePlotsNode(startTime, endTime, node) {
               title: 'Total number of unique users*',
               annotations: [
                 {
-                  x: -0.2,
+                  x: -0.7,
                   y: -0.3,
                   xref: 'paper',
                   yref: 'paper',
@@ -90,7 +108,60 @@ export function makePlotsNode(startTime, endTime, node) {
                     color: 'black'
                   }
                 }
-              ]
+              ],
+              updatemenus: [{
+                buttons: [
+                  // total clients per node pie button
+                  {
+                    args: [
+                      {
+                        values: [rearrangedResults.map(result => result.clients)],
+                        type: 'pie',
+                        sort: false
+                      },
+                      {
+                        title: 'Total number of unique users*',
+                        annotations: [
+                          {
+                            x: -0.7,
+                            y: -0.3,
+                            xref: 'paper',
+                            yref: 'paper',
+                            text: '*<i>Important note: The number of unique users is correct for each node.<br>However, the whole pie does not represent the real value of the total users for<br>all selected nodes, as many clients may have asked data from multiple nodes.<\i>',
+                            showarrow: false,
+                            font: {
+                              family: 'Arial',
+                              size: 12,
+                              color: 'black'
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    label: 'Unique Users Per Node',
+                    method: 'update'
+                  },
+                  // total clients for all specified nodes indicator button
+                  {
+                    args: [
+                      {
+                        type: "indicator",
+                        value: hll.cardinality(),
+                        mode: "number",
+                        number: { font: { size: 50 } }
+                      },
+                      {
+                        title: 'Total number of unique users of all specified nodes',
+                        annotations: []
+                      }
+                    ],
+                    label: 'Unique Users All Nodes',
+                    method: 'update'
+                  }
+                ],
+                direction: 'down',
+                type: 'buttons'
+              }]
             };
             Plotly.newPlot('total-clients', [pieDataClients], pieLayoutClients, {displaylogo: false});
 
@@ -135,7 +206,7 @@ export function makePlotsNode(startTime, endTime, node) {
                         sort: false
                       },
                       {
-                        title: 'Total number of requests',
+                        title: 'Total number of requests'
                       }
                     ],
                     label: 'Total Requests',
@@ -150,7 +221,7 @@ export function makePlotsNode(startTime, endTime, node) {
                         sort: false
                       },
                       {
-                        title: 'Total number of successful requests',
+                        title: 'Total number of successful requests'
                       }
                     ],
                     label: 'Successful Requests',
@@ -165,7 +236,7 @@ export function makePlotsNode(startTime, endTime, node) {
                         sort: false
                       },
                       {
-                        title: 'Total number of unsuccessful requests',
+                        title: 'Total number of unsuccessful requests'
                       }
                     ],
                     label: 'Unsuccessful Requests',
@@ -184,10 +255,10 @@ export function makePlotsNode(startTime, endTime, node) {
         function monthAndYearPlots(details = "month") {
           let url = null;
           if (details === "year") {
-            url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}&level=node&details=year&format=json`;
+            url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}&level=node&details=year&hllvalues=true&format=json`;
           }
           else {
-            url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}&level=node&details=month&format=json`;
+            url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}&level=node&details=month&hllvalues=true&format=json`;
           }
           fetch(url)
             .then((response) => {
@@ -221,6 +292,20 @@ export function makePlotsNode(startTime, endTime, node) {
               }
             })
             .then((data) => {
+              // calculate hll values for total clients all nodes indicator plot
+              let hlls = {};
+              data.results.forEach(result => {
+                if (!hlls[result.date]) {
+                  hlls[result.date] = new HLL(11, 5);
+                }
+                hlls[result.date].union(fromHexString(result.hll_clients).hllSet);
+              });
+              // needed for clients of all specified nodes plot
+              let clientsAllNodes = [];
+              Object.keys(nodesColors).forEach(node => {
+                clientsAllNodes.push([]);
+              });
+              clientsAllNodes[clientsAllNodes.length - 1] = Object.values(hlls).map(hll => hll.cardinality());
               // show clients at first
               const barData = Object.keys(nodesColors).reverse().map((node, index) => {
                   const nodeResults = data.results.filter(result => result.node === node);
@@ -266,13 +351,13 @@ export function makePlotsNode(startTime, endTime, node) {
                 ],
                 updatemenus: [{
                   buttons: [
-                    // clients button
+                    // clients per node button
                     {
                       args: [
                         {
                           x: barData.map(bar => bar.x),
                           y: barData.map(bar => bar.y1),
-                          name: barData.map(bar => bar.node),
+                          name: barData.map(bar => bar.name),
                           type: 'bar'
                         },
                         {
@@ -280,6 +365,7 @@ export function makePlotsNode(startTime, endTime, node) {
                           yaxis: {
                             title: 'Unique users*'
                           },
+                          showlegend: true,
                           annotations: [
                             {
                               x: -0.1,
@@ -298,7 +384,28 @@ export function makePlotsNode(startTime, endTime, node) {
                           ]
                         }
                       ],
-                      label: 'Unique Users*',
+                      label: 'Unique Users Per Node',
+                      method: 'update'
+                    },
+                    // clients all specified nodes button
+                    {
+                      args: [
+                        {
+                          x: [Object.keys(hlls)],
+                          y: clientsAllNodes,
+                          name: Array(Object.keys(nodesColors).length).fill(""),
+                          type: 'bar'
+                        },
+                        {
+                          title: 'Number of unique users of all specified nodes per '+details,
+                          yaxis: {
+                            title: 'Unique Users'
+                          },
+                          showlegend: false,
+                          annotations: []
+                        }
+                      ],
+                      label: 'Unique Users All Nodes',
                       method: 'update'
                     },
                     // bytes button
@@ -307,7 +414,7 @@ export function makePlotsNode(startTime, endTime, node) {
                         {
                           x: barData.map(bar => bar.x),
                           y: barData.map(bar => bar.y2),
-                          name: barData.map(bar => bar.node),
+                          name: barData.map(bar => bar.name),
                           type: 'bar'
                         },
                         {
@@ -315,6 +422,7 @@ export function makePlotsNode(startTime, endTime, node) {
                           yaxis: {
                             title: 'Bytes'
                           },
+                          showlegend: true,
                           annotations: []
                         }
                       ],
@@ -327,7 +435,7 @@ export function makePlotsNode(startTime, endTime, node) {
                         {
                           x: barData.map(bar => bar.x),
                           y: barData.map(bar => bar.y3),
-                          name: barData.map(bar => bar.node),
+                          name: barData.map(bar => bar.name),
                           type: 'bar'
                         },
                         {
@@ -335,6 +443,7 @@ export function makePlotsNode(startTime, endTime, node) {
                           yaxis: {
                             title: 'Total Requests'
                           },
+                          showlegend: true,
                           annotations: []
                         }
                       ],
@@ -347,7 +456,7 @@ export function makePlotsNode(startTime, endTime, node) {
                         {
                           x: barData.map(bar => bar.x),
                           y: barData.map(bar => bar.y4),
-                          name: barData.map(bar => bar.node),
+                          name: barData.map(bar => bar.name),
                           type: 'bar'
                         },
                         {
@@ -355,6 +464,7 @@ export function makePlotsNode(startTime, endTime, node) {
                           yaxis: {
                             title: 'Successful Requests'
                           },
+                          showlegend: true,
                           annotations: []
                         }
                       ],
@@ -367,7 +477,7 @@ export function makePlotsNode(startTime, endTime, node) {
                         {
                           x: barData.map(bar => bar.x),
                           y: barData.map(bar => bar.y5),
-                          name: barData.map(bar => bar.node),
+                          name: barData.map(bar => bar.name),
                           type: 'bar'
                         },
                         {
@@ -375,6 +485,7 @@ export function makePlotsNode(startTime, endTime, node) {
                           yaxis: {
                             title: 'Unsuccessful Requests'
                           },
+                          showlegend: true,
                           annotations: []
                         }
                       ],
@@ -398,7 +509,7 @@ export function makePlotsNode(startTime, endTime, node) {
         }
 
         function mapPlots() {
-          const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}&level=node&details=country&format=json`;
+          const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}&level=node&details=country&hllvalues=true&format=json`;
           fetch(url)
             .then((response) => {
               if (response.ok) {
@@ -430,18 +541,21 @@ export function makePlotsNode(startTime, endTime, node) {
                 if (!aggregate[result.country]) {
                   aggregate[result.country] = {
                     country: result.country,
-                    clients: 0,
+                    clients: new HLL(11, 5),
                     bytes: 0,
                     nb_reqs: 0,
                     nb_successful_reqs: 0,
                   };
                 }
-                aggregate[result.country].clients += result.clients;
+                aggregate[result.country].clients.union(fromHexString(result.hll_clients).hllSet);
                 aggregate[result.country].bytes += result.bytes;
                 aggregate[result.country].nb_reqs += result.nb_reqs;
                 aggregate[result.country].nb_successful_reqs += result.nb_successful_reqs;
                 return aggregate;
               }, {});
+              for (const country in aggregatedResults) {
+                aggregatedResults[country].clients = aggregatedResults[country].clients.cardinality();
+              }
 
               // convert ISO-2 to ISO-3 country codes
               const iso2ToIso3 = require('country-iso-2-to-3');
@@ -603,18 +717,21 @@ export function makePlotsNode(startTime, endTime, node) {
                   if (!aggregate[result.country]) {
                     aggregate[result.country] = {
                       country: result.country,
-                      clients: 0,
+                      clients: new HLL(11, 5),
                       bytes: 0,
                       nb_reqs: 0,
                       nb_successful_reqs: 0,
                     };
                   }
-                  aggregate[result.country].clients += result.clients;
+                  aggregate[result.country].clients.union(fromHexString(result.hll_clients).hllSet);
                   aggregate[result.country].bytes += result.bytes;
                   aggregate[result.country].nb_reqs += result.nb_reqs;
                   aggregate[result.country].nb_successful_reqs += result.nb_successful_reqs;
                   return aggregate;
                 }, {});
+                for (const country in aggregatedResults) {
+                  aggregatedResults[country].clients = aggregatedResults[country].clients.cardinality();
+                }
                 const newCountryCodesISO3 = Object.values(aggregatedResults).map(result => result.country).map(code => iso2ToIso3(code));
                 const activeButtonIndex = mapLayout.updatemenus[0].active;
                 const zValues = Object.values(aggregatedResults).map(result => {
@@ -664,5 +781,10 @@ export function makePlotsNode(startTime, endTime, node) {
             });
         }
   })
-  .catch((error) => console.log(error));
+  .catch((error) => {
+    console.log(error);
+    // remove loading message
+    clearInterval(intervalId);
+    loadingMsg.innerHTML = "";
+  });
 }
