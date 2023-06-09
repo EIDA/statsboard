@@ -32,11 +32,11 @@ h1 {
   align-items: flex-start;
 }
 
-#total-clients, #total-bytes, #total-requests, #country-plots, #node-checkboxes {
+#total-clients, #total-bytes, #total-requests, #country-plots, #nns-checkboxes {
   flex: 1;
 }
 
-#node-checkboxes {
+#nns-checkboxes {
   margin-top: 6.6%;
   margin-left: 50px;
   text-align: left;
@@ -57,4 +57,10 @@ h1 {
   color: #333;
   text-align: center;
   margin: 10px 0;
+}
+
+.error-plot {
+  color: red;
+  font-style: italic;
+  margin-top: 10px;
 }
