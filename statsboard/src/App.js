@@ -35,7 +35,7 @@ function App() {
       Plotly.purge('country-plots');
     }
     // clear checkboxes for map plot
-    const nodeCheckboxesContainer = document.getElementById('node-checkboxes');
+    const nodeCheckboxesContainer = document.getElementById('nns-checkboxes');
     if (nodeCheckboxesContainer) {
       nodeCheckboxesContainer.innerHTML = '';
     }
@@ -149,7 +149,7 @@ function App() {
             <div className="error-plot" id="error-map"></div>
             <div className="mapAndBoxes">
               <div id="country-plots"></div>
-              <div id="node-checkboxes"></div>
+              <div id="nns-checkboxes"></div>
             </div>
           </div>
         </>

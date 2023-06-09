@@ -292,7 +292,7 @@ export function makePlotsNode(startTime, endTime, node) {
               }
             })
             .then((data) => {
-              // calculate hll values for total clients all nodes indicator plot
+              // calculate hll values for total clients all nodes bar plot
               let hlls = {};
               data.results.forEach(result => {
                 if (!hlls[result.date]) {
@@ -503,7 +503,7 @@ export function makePlotsNode(startTime, endTime, node) {
               else if (details === "month") {
                 barLayout.xaxis["dtick"] = "M1";
               }
-              Plotly.newPlot(details+'-plots', barData.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: 'bar', marker: bar.marker})), barLayout, {displaylogo: false});
+              Plotly.newPlot(details+'-plots', barData.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: 'bar', marker: bar.marker, hovertemplate: '(%{x}, %{value:.3s})'})), barLayout, {displaylogo: false});
             })
             .catch((error) => console.log(error));
         }
@@ -556,7 +556,6 @@ export function makePlotsNode(startTime, endTime, node) {
               for (const country in aggregatedResults) {
                 aggregatedResults[country].clients = aggregatedResults[country].clients.cardinality();
               }
-
               // convert ISO-2 to ISO-3 country codes
               const iso2ToIso3 = require('country-iso-2-to-3');
               const countryCodesISO3 = Object.values(aggregatedResults).map(result => result.country).map(code => iso2ToIso3(code));
@@ -570,7 +569,8 @@ export function makePlotsNode(startTime, endTime, node) {
                 geojson: new URL('./world-countries.json', import.meta.url).href,
                 colorscale: 'Viridis',
                 autocolorscale: false,
-                reversescale: true
+                reversescale: true,
+                hovertemplate: '%{z:.3s}<extra>%{location}</extra>'
               }];
               let mapLayout = {
                 title: 'Number of unique users per country',
@@ -680,7 +680,7 @@ export function makePlotsNode(startTime, endTime, node) {
                   <label htmlFor={`node-${index}`}>{node}</label>
                 </div>
               ));
-              const nodeCheckboxesContainer = document.getElementById('node-checkboxes');
+              const nodeCheckboxesContainer = document.getElementById('nns-checkboxes');
               nodeCheckboxesContainer.innerHTML = '';
               ReactDOM.createRoot(nodeCheckboxesContainer).render(nodeCheckboxes);
               let lastClickedTime = 0;
@@ -690,8 +690,8 @@ export function makePlotsNode(startTime, endTime, node) {
                 const checkbox = event.target;
                 const currentTime = new Date().getTime();
                 const timeDiff = currentTime - lastClickedTime;
-                const checkboxes = document.querySelectorAll('#node-checkboxes input[type="checkbox"]');
-                const checkedCount = document.querySelectorAll('#node-checkboxes input[type="checkbox"]:checked').length;
+                const checkboxes = document.querySelectorAll('#nns-checkboxes input[type="checkbox"]');
+                const checkedCount = document.querySelectorAll('#nns-checkboxes input[type="checkbox"]:checked').length;
                 if (checkbox === lastClickedCheckbox && timeDiff < 300) {
                   if (checkedCount === 1 && checkbox.checked) {
                     checkboxes.forEach((cb) => {
@@ -707,7 +707,7 @@ export function makePlotsNode(startTime, endTime, node) {
                 lastClickedCheckbox = checkbox;
                 lastClickedTime = currentTime;
                 // now update the plot with appropriate data
-                const checked = document.querySelectorAll('#node-checkboxes input[type="checkbox"]:checked');
+                const checked = document.querySelectorAll('#nns-checkboxes input[type="checkbox"]:checked');
                 const selectedNodes = [];
                 checked.forEach((cb) => {
                   selectedNodes.push(cb.value);
@@ -755,7 +755,8 @@ export function makePlotsNode(startTime, endTime, node) {
                   geojson: new URL('./world-countries.json', import.meta.url).href,
                   colorscale: 'Viridis',
                   autocolorscale: false,
-                  reversescale: true
+                  reversescale: true,
+                  hovertemplate: '%{z:.3s}<extra>%{location}</extra>'
                 }];
                 mapLayout.updatemenus[0].buttons.forEach((button, index) => {
                   if (button && index === 0) {
