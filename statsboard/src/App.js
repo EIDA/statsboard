@@ -1,6 +1,17 @@
 import './App.css';
 import { useState } from 'react';
 import Plotly from 'plotly.js-dist';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import FormControl from '@mui/material/FormControl';
+import FormLabel from '@mui/material/FormLabel';
+import Checkbox from '@mui/material/Checkbox';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { makePlotsEIDA } from './plotsEIDA.js';
 import { makePlotsNode } from './plotsNode.js';
 import { makePlotsNetwork } from './plotsNetwork.js';
@@ -14,6 +25,7 @@ function App() {
   const [showError, setShowError] = useState("");
   const [node, setNode] = useState("");
   const [network, setNetwork] = useState("");
+  const [station, setStation] = useState("");
 
   function handleClick() {
     if (!showError) {
@@ -73,8 +85,7 @@ function App() {
         For more details, visit the <a href="https://ws.resif.fr/eidaws/statistics/1/">statistics webservice.</a>
       </div>
       <div>
-        <input type="checkbox" checked={isAuthenticated} onChange={() => setIsAuthenticated(!isAuthenticated)} />
-        <label>Authentication</label>
+        <FormControlLabel control={<Checkbox checked={isAuthenticated} onChange={() => {setIsAuthenticated(!isAuthenticated); setLevel("eida");}}/>} label="Authentication" />
         {isAuthenticated && (
           <div>
             <label>Upload token file: </label>
@@ -86,41 +97,46 @@ function App() {
         )}
       </div>
       <div>
-        <label>Start time: </label>
-        <input type="month" value={startTime} onChange={(event) => setStartTime(event.target.value)} />
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DatePicker label="Start Time" sx={{ m: 0.5 }} views={['year', 'month']} slotProps={{ textField: { size: 'small' } }} onChange={(newValue) => (newValue ? setStartTime(newValue.$y+'-'+(newValue.$M+1)) : '')} />
+        </LocalizationProvider>
       </div>
       <div>
-        <label>End time: </label>
-        <input type="month" value={endTime} onChange={(event) => setEndTime(event.target.value)} />
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DatePicker label="End Time" sx={{ m: 0.5 }} views={['year', 'month']} slotProps={{ textField: { size: 'small' } }} onChange={(newValue) => (newValue ? setEndTime(newValue.$y+'-'+(newValue.$M+1)) : '')} />
+        </LocalizationProvider>
       </div>
       <div>
-        <label>Level: </label>
-        <input type="radio" name="level" value="eida" checked={level === "eida" || (!isAuthenticated && level === "station")} onChange={e => setLevel(e.target.value)} />
-        <label>EIDA </label>
-        <input type="radio" name="level" value="node" checked={level === "node"} onChange={e => setLevel(e.target.value)} />
-        <label>Node </label>
-        <input type="radio" name="level" value="network" checked={level === "network"} onChange={e => setLevel(e.target.value)} />
-        <label>Network </label>
-        {isAuthenticated && (
-          <>
-            <input type="radio" name="level" value="station" checked={level === "station"} onChange={e => setLevel(e.target.value)} />
-            <label>Station </label>
-          </>
-        )}
+        <FormControl>
+          <FormLabel id="demo-row-radio-buttons-group-label">Level</FormLabel>
+          <RadioGroup
+            row
+            aria-labelledby="demo-row-radio-buttons-group-label"
+            name="row-radio-buttons-group"
+          >
+            <FormControlLabel value="eida" control={<Radio checked={level === "eida"} onChange={e => setLevel(e.target.value)}/>} label="EIDA" />
+            <FormControlLabel value="node" control={<Radio checked={level === "node"} onChange={e => setLevel(e.target.value)}/>} label="Node" />
+            <FormControlLabel value="network" control={<Radio checked={level === "network"} onChange={e => setLevel(e.target.value)}/>} label="Network" />
+            {isAuthenticated && (<FormControlLabel value="station" control={<Radio checked={level === "station"} onChange={e => setLevel(e.target.value)}/>} label="Station" />)}
+          </RadioGroup>
+        </FormControl>
       </div>
       {level !== "eida" && (
         <div>
-          <label>Node: </label>
-          <input type="text" value={node} onChange={e => setNode(e.target.value)} />
+          <TextField label="Node" sx={{ m: 0.5 }} size="small" variant="outlined" value={node} onChange={e => setNode(e.target.value)} />
         </div>
       )}
-      {level === "network" && (
+      {(level === "network" || level === "station") && (
         <div>
-          <label>Network: </label>
-          <input type="text" value={network} onChange={e => setNetwork(e.target.value)} />
+          <TextField label="Network" sx={{ m: 0.5 }} size="small" variant="outlined" value={network} onChange={e => setNetwork(e.target.value)} />
         </div>
       )}
-      <button onClick={handleClick}>Make Plots</button>
+      {level === "station" && (
+        <div>
+          <TextField label="Station" sx={{ m: 0.5 }} size="small" variant="outlined" value={station} onChange={e => setStation(e.target.value)} />
+        </div>
+      )}
+      <Button sx={{ m: 0.5 }} variant="contained" onClick={handleClick}>Make Plots</Button>
       {showError && (
         <div className="error-message">
           {showError}
