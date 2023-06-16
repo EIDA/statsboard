@@ -96,7 +96,7 @@ export function makePlotsNode(startTime, endTime, node) {
               title: 'Total number of unique users*',
               annotations: [
                 {
-                  x: -0.7,
+                  x: -1,
                   y: -0.3,
                   xref: 'paper',
                   yref: 'paper',
@@ -123,7 +123,7 @@ export function makePlotsNode(startTime, endTime, node) {
                         title: 'Total number of unique users*',
                         annotations: [
                           {
-                            x: -0.7,
+                            x: -1,
                             y: -0.3,
                             xref: 'paper',
                             yref: 'paper',
@@ -683,6 +683,8 @@ export function makePlotsNode(startTime, endTime, node) {
               const nodeCheckboxesContainer = document.getElementById('nns-checkboxes');
               nodeCheckboxesContainer.innerHTML = '';
               ReactDOM.createRoot(nodeCheckboxesContainer).render(nodeCheckboxes);
+              const mapAndBoxes = document.getElementById('mapAndBoxes');
+              mapAndBoxes.style.backgroundColor = 'white';
               let lastClickedTime = 0;
               let lastClickedCheckbox = null;
               function handleCheckboxClick(event) {

@@ -9,6 +9,7 @@ import RadioGroup from '@mui/material/RadioGroup';
 import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
 import Checkbox from '@mui/material/Checkbox';
+import Grid from '@mui/material/Grid';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -45,6 +46,8 @@ function App() {
       Plotly.purge('month-plots');
       Plotly.purge('year-plots');
       Plotly.purge('country-plots');
+      const mapAndBoxes = document.getElementById('mapAndBoxes');
+      mapAndBoxes.style.backgroundColor = '#f5f5f5';
     }
     // clear checkboxes for map plot
     const nodeCheckboxesContainer = document.getElementById('nns-checkboxes');
@@ -79,63 +82,69 @@ function App() {
 
   return (
     <div className="App">
-      <h1>EIDA Statistics Dashboard</h1>
-      <div className="info">
-        This is a dashboard UI which allows users to explore <a href="http://www.orfeus-eu.org/data/eida/">EIDA</a> usage statistics in the form of plots.
-        For more details, visit the <a href="https://ws.resif.fr/eidaws/statistics/1/">statistics webservice.</a>
-      </div>
-      <div>
-        <FormControlLabel control={<Checkbox checked={isAuthenticated} onChange={() => {setIsAuthenticated(!isAuthenticated); setLevel("eida");}}/>} label="Authentication" />
-        {isAuthenticated && (
-          <div>
-            <label>Upload token file: </label>
-            <input type="file" onChange={(event) => setAuthTokenFile(event.target.files[0])} />
-            <div className="upload-note">
-              To redeem an EIDA authentication token file visit <a href="https://geofon.gfz-potsdam.de/eas/">https://geofon.gfz-potsdam.de/eas</a>.
-            </div>
+      <Grid id="form-container" container spacing={2}>
+        <Grid id="form-left" item xs={5}>
+          <h1>EIDA Statistics Dashboard</h1>
+          <div className="info">
+            Dashboard UI to explore <a href="http://www.orfeus-eu.org/data/eida/">EIDA</a> usage statistics in the form of plots.<br></br>
+            For more details, visit the <a href="https://ws.resif.fr/eidaws/statistics/1/">statistics webservice.</a>
           </div>
-        )}
-      </div>
-      <div>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DatePicker label="Start Time" sx={{ m: 0.5 }} views={['year', 'month']} slotProps={{ textField: { size: 'small' } }} onChange={(newValue) => (newValue ? setStartTime(newValue.$y+'-'+(newValue.$M+1)) : '')} />
-        </LocalizationProvider>
-      </div>
-      <div>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DatePicker label="End Time" sx={{ m: 0.5 }} views={['year', 'month']} slotProps={{ textField: { size: 'small' } }} onChange={(newValue) => (newValue ? setEndTime(newValue.$y+'-'+(newValue.$M+1)) : '')} />
-        </LocalizationProvider>
-      </div>
-      <div>
-        <FormControl>
-          <FormLabel id="demo-row-radio-buttons-group-label">Level</FormLabel>
-          <RadioGroup
-            row
-            aria-labelledby="demo-row-radio-buttons-group-label"
-            name="row-radio-buttons-group"
-          >
-            <FormControlLabel value="eida" control={<Radio checked={level === "eida"} onChange={e => setLevel(e.target.value)}/>} label="EIDA" />
-            <FormControlLabel value="node" control={<Radio checked={level === "node"} onChange={e => setLevel(e.target.value)}/>} label="Node" />
-            <FormControlLabel value="network" control={<Radio checked={level === "network"} onChange={e => setLevel(e.target.value)}/>} label="Network" />
-            {isAuthenticated && (<FormControlLabel value="station" control={<Radio checked={level === "station"} onChange={e => setLevel(e.target.value)}/>} label="Station" />)}
-          </RadioGroup>
-        </FormControl>
-      </div>
-      {level !== "eida" && (
-        <div>
-          <TextField label="Node" sx={{ m: 0.5 }} size="small" variant="outlined" value={node} onChange={e => setNode(e.target.value)} />
-        </div>
-      )}
-      {(level === "network" || level === "station") && (
-        <div>
-          <TextField label="Network" sx={{ m: 0.5 }} size="small" variant="outlined" value={network} onChange={e => setNetwork(e.target.value)} />
-        </div>
-      )}
-      {level === "station" && (
-        <div>
-          <TextField label="Station" sx={{ m: 0.5 }} size="small" variant="outlined" value={station} onChange={e => setStation(e.target.value)} />
-        </div>
-      )}
+          <div>
+            <FormControlLabel control={<Checkbox checked={isAuthenticated} onChange={() => {setIsAuthenticated(!isAuthenticated); setLevel("eida");}}/>} label="Authentication" />
+            {isAuthenticated && (
+              <div>
+                <label>Upload token file: </label>
+                <input type="file" onChange={(event) => setAuthTokenFile(event.target.files[0])} />
+                <div className="upload-note">
+                  To redeem an EIDA authentication token file visit <a href="https://geofon.gfz-potsdam.de/eas/">https://geofon.gfz-potsdam.de/eas</a>.
+                </div>
+              </div>
+            )}
+          </div>
+        </Grid>
+        <Grid item xs={5} mt={2}>
+          <div>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker label="Start Time" sx={{ m: 0.5 }} views={['year', 'month']} slotProps={{ textField: { size: 'small' } }} onChange={(newValue) => (newValue ? setStartTime(newValue.$y+'-'+(newValue.$M+1)) : setStartTime(undefined))} />
+            </LocalizationProvider>
+          </div>
+          <div>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker label="End Time" sx={{ m: 0.5 }} views={['year', 'month']} slotProps={{ textField: { size: 'small' } }} onChange={(newValue) => (newValue ? setEndTime(newValue.$y+'-'+(newValue.$M+1)) : setEndTime(undefined))} />
+            </LocalizationProvider>
+          </div>
+          <div>
+            <FormControl>
+              <FormLabel id="demo-row-radio-buttons-group-label">Level</FormLabel>
+              <RadioGroup
+                row
+                aria-labelledby="demo-row-radio-buttons-group-label"
+                name="row-radio-buttons-group"
+              >
+                <FormControlLabel value="eida" control={<Radio checked={level === "eida"} onChange={e => setLevel(e.target.value)}/>} label="EIDA" />
+                <FormControlLabel value="node" control={<Radio checked={level === "node"} onChange={e => setLevel(e.target.value)}/>} label="Node" />
+                <FormControlLabel value="network" control={<Radio checked={level === "network"} onChange={e => setLevel(e.target.value)}/>} label="Network" />
+                {isAuthenticated && (<FormControlLabel value="station" control={<Radio checked={level === "station"} onChange={e => setLevel(e.target.value)}/>} label="Station" />)}
+              </RadioGroup>
+            </FormControl>
+          </div>
+          {level !== "eida" && (
+            <div>
+              <TextField label="Node" sx={{ m: 0.5 }} size="small" variant="outlined" value={node} onChange={e => setNode(e.target.value)} />
+            </div>
+          )}
+          {(level === "network" || level === "station") && (
+            <div>
+              <TextField label="Network" sx={{ m: 0.5 }} size="small" variant="outlined" value={network} onChange={e => setNetwork(e.target.value)} />
+            </div>
+          )}
+          {level === "station" && (
+            <div>
+              <TextField label="Station" sx={{ m: 0.5 }} size="small" variant="outlined" value={station} onChange={e => setStation(e.target.value)} />
+            </div>
+          )}
+        </Grid>
+      </Grid>
       <Button sx={{ m: 0.5 }} variant="contained" onClick={handleClick}>Make Plots</Button>
       {showError && (
         <div className="error-message">
@@ -145,28 +154,26 @@ function App() {
       {!showError && (
         <>
           <div id="loading-msg"></div>
-          <div className="total-wrapper">
-            <div className="error-plot" id="error-total"></div>
-            <div className="total-plots">
-              <div id="total-clients"></div>
-              <div id="total-bytes"></div>
-              <div id="total-requests"></div>
-            </div>
-          </div>
-          <div className="month-wrapper">
-            <div className="error-plot" id="error-month"></div>
-            <div id="month-plots"></div>
-          </div>
-          <div className="year-wrapper">
-            <div className="error-plot" id="error-year"></div>
-            <div id="year-plots"></div>
-          </div>
-          <div className="map-wrapper">
-            <div className="error-plot" id="error-map"></div>
-            <div className="mapAndBoxes">
-              <div id="country-plots"></div>
-              <div id="nns-checkboxes"></div>
-            </div>
+          <div className="error-plot" id="error-total"></div>
+          <Grid container spacing={2}>
+            <Grid item xs={12} lg={4}>
+              <div className="plot" id="total-clients"></div>
+            </Grid>
+            <Grid item xs={12} lg={4}>
+              <div className="plot" id="total-bytes"></div>
+            </Grid>
+            <Grid item xs={12} lg={4}>
+              <div className="plot" id="total-requests"></div>
+            </Grid>
+          </Grid>
+          <div className="error-plot" id="error-month"></div>
+          <div className="plot" id="month-plots"></div>
+          <div className="error-plot" id="error-year"></div>
+          <div className="plot" id="year-plots"></div>
+          <div className="error-plot" id="error-map"></div>
+          <div id="mapAndBoxes">
+            <div id="country-plots"></div>
+            <div id="nns-checkboxes"></div>
           </div>
         </>
       )}
