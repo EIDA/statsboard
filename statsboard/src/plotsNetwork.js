@@ -72,7 +72,7 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
           title: 'Total number of unique users*',
           annotations: [
             {
-              x: -1.2,
+              xshift: -50,
               y: -0.3,
               xref: 'paper',
               yref: 'paper',
@@ -99,7 +99,7 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
                     title: 'Total number of unique users*',
                     annotations: [
                       {
-                        x: -1.2,
+                        xshift: -50,
                         y: -0.3,
                         xref: 'paper',
                         yref: 'paper',
@@ -292,6 +292,10 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
               }
           });
           let barLayout = {
+            height: 500,
+            margin: {
+              b: 100
+            },
             barmode: 'stack',
             title: 'Number of unique users* per '+details,
             xaxis: {
@@ -301,20 +305,19 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
             yaxis: {
               title: 'Unique users*'
             },
+            showlegend: true,
             annotations: [
               {
-                x: -0.1,
-                y: -0.3,
+                y: -0.32,
                 xref: 'paper',
                 yref: 'paper',
-                text: '*<i>Important note: The number of unique users is correct for each network. However, the total number<br> of unique users for all selected networks, i.e. the height of the bars, does not represent the real value,<br> as many clients may have asked data from multiple networks.<\i>',
+                text: '*<i>Important note: The number of unique users is correct for each network. However, the total number of unique users for all selected networks,<br> i.e. the height of the bars, does not represent the real value, as many clients may have asked data from multiple networks.<\i>',
                 showarrow: false,
                 font: {
                   family: 'Arial',
                   size: 12,
                   color: 'black'
-                },
-                align: 'left'
+                }
               }
             ],
             updatemenus: [{
@@ -336,18 +339,16 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
                       showlegend: true,
                       annotations: [
                         {
-                          x: -0.1,
-                          y: -0.3,
+                          y: -0.32,
                           xref: 'paper',
                           yref: 'paper',
-                          text: '*<i>Important note: The number of unique users is correct for each network. However, the total number<br> of unique users for all selected networks, i.e. the height of the bars, does not represent the real value,<br> as many clients may have asked data from multiple networks.<\i>',
+                          text: '*<i>Important note: The number of unique users is correct for each network. However, the total number of unique users for all selected networks,<br> i.e. the height of the bars, does not represent the real value, as many clients may have asked data from multiple networks.<\i>',
                           showarrow: false,
                           font: {
                             family: 'Arial',
                             size: 12,
                             color: 'black'
-                          },
-                          align: 'left'
+                          }
                         }
                       ]
                     }

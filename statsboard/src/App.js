@@ -1,8 +1,10 @@
 import './App.css';
-import { useState } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import Plotly from 'plotly.js-dist';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
+import Autocomplete from '@mui/material/Autocomplete';
+import CircularProgress from '@mui/material/CircularProgress';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
@@ -68,7 +70,7 @@ function App() {
           makePlotsEIDA(startTime, endTime);
           break;
         case "node":
-          makePlotsNode(startTime, endTime, node);
+          makePlotsNode(startTime, endTime, special.join(','));
           break;
         case "network":
           makePlotsNetwork(startTime, endTime, node, network)
@@ -79,6 +81,63 @@ function App() {
       }
     }, 200);
   }
+
+  // make a call to retrieve list of nodes
+  async function get_nodes() {
+    try {
+      const response = await fetch('https://ws.resif.fr/eidaws/statistics/1/nodes');
+      if (!response.ok) {
+        throw new Error('Failed to fetch nodes');
+      }
+      const data = await response.json();
+      return data.nodes.map(node => node.name).sort();
+    }
+    catch (error) {
+      console.error(error);
+      return [];
+    }
+  }
+  const [open, setOpen] = useState(false);
+  const [options, setOptions] = useState([]);
+  const [special, setSpecial] = useState([]);
+  const loading = open && options.length === 0;
+  useEffect(() => {
+    let active = true;
+    if (!loading) {
+      return undefined;
+    }
+    (async () => {
+      let nodes = await get_nodes();
+      if (active) {
+        setOptions(nodes);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [loading]);
+  useEffect(() => {
+    if (!open) {
+      setOptions([]);
+    }
+  }, [open]);
+
+/*  fetch('https://ws.resif.fr/eidaws/statistics/1/nodes')
+    .then((response) => {
+      if (response.ok) {
+        return response.json();
+      }
+      else {
+        response.text().then(errorMessage => {
+          throw Error(response.statusText);
+        });
+      }
+    })
+    .then((data) => {
+      nodes = data.nodes.map(node => node.name).sort();
+    })
+    .catch((error) => console.log(error));
+  console.log(nodes);*/
 
   return (
     <div className="App">
@@ -105,12 +164,12 @@ function App() {
         <Grid item xs={5} mt={2}>
           <div>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker label="Start Time" sx={{ m: 0.5 }} views={['year', 'month']} slotProps={{ textField: { size: 'small' } }} onChange={(newValue) => (newValue ? setStartTime(newValue.$y+'-'+(newValue.$M+1)) : setStartTime(undefined))} />
+              <DatePicker label="Start Time" sx={{ my: 1 }} views={['year', 'month']} slotProps={{ textField: { size: 'small' } }} onChange={(newValue) => (newValue ? setStartTime(newValue.$y+'-'+(newValue.$M+1)) : setStartTime(undefined))} />
             </LocalizationProvider>
           </div>
           <div>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker label="End Time" sx={{ m: 0.5 }} views={['year', 'month']} slotProps={{ textField: { size: 'small' } }} onChange={(newValue) => (newValue ? setEndTime(newValue.$y+'-'+(newValue.$M+1)) : setEndTime(undefined))} />
+              <DatePicker label="End Time" sx={{ my: 1 }} views={['year', 'month']} slotProps={{ textField: { size: 'small' } }} onChange={(newValue) => (newValue ? setEndTime(newValue.$y+'-'+(newValue.$M+1)) : setEndTime(undefined))} />
             </LocalizationProvider>
           </div>
           <div>
@@ -130,17 +189,50 @@ function App() {
           </div>
           {level !== "eida" && (
             <div>
-              <TextField label="Node" sx={{ m: 0.5 }} size="small" variant="outlined" value={node} onChange={e => setNode(e.target.value)} />
+              <Autocomplete
+                className="autocomplete"
+                sx={{ my: 1, minWidth: 300 }}
+                size="small"
+                open={open}
+                onOpen={() => {
+                  setOpen(true);
+                }}
+                onClose={() => {
+                  setOpen(false);
+                }}
+                isOptionEqualToValue={(option, value) => option === value}
+                onInputChange={e => console.log(special.concat(e.target.value))}
+                onChange={(e, nv) => setSpecial(nv)}
+                freeSolo
+                options={options}
+                loading={loading}
+                multiple
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Node"
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <Fragment>
+                          {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                          {params.InputProps.endAdornment}
+                        </Fragment>
+                      ),
+                    }}
+                  />
+                )}
+              />
             </div>
           )}
           {(level === "network" || level === "station") && (
             <div>
-              <TextField label="Network" sx={{ m: 0.5 }} size="small" variant="outlined" value={network} onChange={e => setNetwork(e.target.value)} />
+              <TextField label="Network" sx={{ my: 1 }} size="small" variant="outlined" value={network} onChange={e => setNetwork(e.target.value)} />
             </div>
           )}
           {level === "station" && (
             <div>
-              <TextField label="Station" sx={{ m: 0.5 }} size="small" variant="outlined" value={station} onChange={e => setStation(e.target.value)} />
+              <TextField label="Station" sx={{ my: 1 }} size="small" variant="outlined" value={station} onChange={e => setStation(e.target.value)} />
             </div>
           )}
         </Grid>

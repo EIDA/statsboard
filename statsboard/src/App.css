@@ -94,3 +94,7 @@ h1 {
   background-color: white;
   overflow: hidden;
 }
+
+.autocomplete {
+  display: inline-flex;
+}
