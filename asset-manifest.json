@@ -1,16 +1,16 @@
 {
   "files": {
-    "main.css": "/statsboard/static/css/main.186c80fe.css",
-    "main.js": "/statsboard/static/js/main.98dd6896.js",
+    "main.css": "/statsboard/static/css/main.0e1075f3.css",
+    "main.js": "/statsboard/static/js/main.fd6a2f9f.js",
     "static/js/787.c8b1fb18.chunk.js": "/statsboard/static/js/787.c8b1fb18.chunk.js",
     "static/media/world-countries.json": "/statsboard/static/media/world-countries.36cfc374c3caeabe2159.json",
     "index.html": "/statsboard/index.html",
-    "main.186c80fe.css.map": "/statsboard/static/css/main.186c80fe.css.map",
-    "main.98dd6896.js.map": "/statsboard/static/js/main.98dd6896.js.map",
+    "main.0e1075f3.css.map": "/statsboard/static/css/main.0e1075f3.css.map",
+    "main.fd6a2f9f.js.map": "/statsboard/static/js/main.fd6a2f9f.js.map",
     "787.c8b1fb18.chunk.js.map": "/statsboard/static/js/787.c8b1fb18.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.186c80fe.css",
-    "static/js/main.98dd6896.js"
+    "static/css/main.0e1075f3.css",
+    "static/js/main.fd6a2f9f.js"
   ]
 }
