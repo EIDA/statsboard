@@ -26,8 +26,10 @@ function App() {
   const [endTime, setEndTime] = useState(undefined);
   const [level, setLevel] = useState("eida");
   const [showError, setShowError] = useState("");
-  const [node, setNode] = useState("");
-  const [network, setNetwork] = useState("");
+  const [node, setNode] = useState([]);
+  const [inputNode, setInputNode] = useState("");
+  const [network, setNetwork] = useState([]);
+  const [inputNetwork, setInputNetwork] = useState("");
   const [station, setStation] = useState("");
 
   function handleClick() {
@@ -63,6 +65,16 @@ function App() {
     }
     // otherwise clear error message
     setShowError("");
+    // helper function for parameter passing
+    function paramToPass(lst, str) {
+      if (lst.length !== 0 && str) {
+        return `${lst.join(',')},${str}`;
+      } else if (lst.length !== 0) {
+          return lst.join(',');
+      } else {
+        return str;
+      }
+    }
     // delay execution to allow React to update the page and create the loading-msg element, otherwise error pops up
     setTimeout(() => {
       switch(level) {
@@ -70,10 +82,10 @@ function App() {
           makePlotsEIDA(startTime, endTime);
           break;
         case "node":
-          makePlotsNode(startTime, endTime, special.join(','));
+          makePlotsNode(startTime, endTime, paramToPass(node, inputNode));
           break;
         case "network":
-          makePlotsNetwork(startTime, endTime, node, network)
+          makePlotsNetwork(startTime, endTime, paramToPass(node, inputNode), isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork));
           break;
         default:
           setShowError("Plots for Station level are not implemented yet!");
@@ -99,7 +111,6 @@ function App() {
   }
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState([]);
-  const [special, setSpecial] = useState([]);
   const loading = open && options.length === 0;
   useEffect(() => {
     let active = true;
@@ -122,22 +133,44 @@ function App() {
     }
   }, [open]);
 
-/*  fetch('https://ws.resif.fr/eidaws/statistics/1/nodes')
-    .then((response) => {
-      if (response.ok) {
-        return response.json();
+  // make a call to retrieve list of networks
+  async function get_networks() {
+    try {
+      const response = await fetch('https://ws.resif.fr/eidaws/statistics/1/networks');
+      if (!response.ok) {
+        throw new Error('Failed to fetch networks');
       }
-      else {
-        response.text().then(errorMessage => {
-          throw Error(response.statusText);
-        });
+      const data = await response.json();
+      return Array.from(new Set(data.networks.map(net => net.name))).sort();
+    }
+    catch (error) {
+      console.error(error);
+      return [];
+    }
+  }
+  const [openNet, setOpenNet] = useState(false);
+  const [optionsNet, setOptionsNet] = useState([]);
+  const loadingNet = openNet && optionsNet.length === 0;
+  useEffect(() => {
+    let activeNet = true;
+    if (!loadingNet) {
+      return undefined;
+    }
+    (async () => {
+      let networks = await get_networks();
+      if (activeNet) {
+        setOptionsNet(networks);
       }
-    })
-    .then((data) => {
-      nodes = data.nodes.map(node => node.name).sort();
-    })
-    .catch((error) => console.log(error));
-  console.log(nodes);*/
+    })();
+    return () => {
+      activeNet = false;
+    };
+  }, [loadingNet]);
+  useEffect(() => {
+    if (!openNet) {
+      setOptionsNet([]);
+    }
+  }, [openNet]);
 
   return (
     <div className="App">
@@ -193,20 +226,16 @@ function App() {
                 className="autocomplete"
                 sx={{ my: 1, minWidth: 300 }}
                 size="small"
-                open={open}
-                onOpen={() => {
-                  setOpen(true);
-                }}
-                onClose={() => {
-                  setOpen(false);
-                }}
-                isOptionEqualToValue={(option, value) => option === value}
-                onInputChange={e => console.log(special.concat(e.target.value))}
-                onChange={(e, nv) => setSpecial(nv)}
                 freeSolo
-                options={options}
-                loading={loading}
                 multiple
+                onInputChange={e => setInputNode(e.target.value)}
+                onChange={(e, nv) => setNode(nv)}
+                options={options}
+                open={open}
+                onOpen={() => setOpen(true)}
+                onClose={() => setOpen(false)}
+                isOptionEqualToValue={(option, value) => option === value}
+                loading={loading}
                 renderInput={(params) => (
                   <TextField
                     {...params}
@@ -227,7 +256,36 @@ function App() {
           )}
           {(level === "network" || level === "station") && (
             <div>
-              <TextField label="Network" sx={{ my: 1 }} size="small" variant="outlined" value={network} onChange={e => setNetwork(e.target.value)} />
+            <Autocomplete
+              className="autocomplete"
+              sx={{ my: 1, minWidth: 300 }}
+              size="small"
+              freeSolo
+              multiple={isAuthenticated}
+              onInputChange={e => setInputNetwork(e.target.value)}
+              onChange={(e, nv) => setNetwork(nv)}
+              options={optionsNet}
+              open={openNet}
+              onOpen={() => setOpenNet(true)}
+              onClose={() => setOpenNet(false)}
+              isOptionEqualToValue={(option, value) => option === value}
+              loading={loadingNet}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Network"
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <Fragment>
+                        {loadingNet ? <CircularProgress color="inherit" size={20} /> : null}
+                        {params.InputProps.endAdornment}
+                      </Fragment>
+                    ),
+                  }}
+                />
+              )}
+            />
             </div>
           )}
           {level === "station" && (
