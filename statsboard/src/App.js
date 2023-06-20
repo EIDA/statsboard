@@ -213,9 +213,9 @@ function App() {
                 aria-labelledby="demo-row-radio-buttons-group-label"
                 name="row-radio-buttons-group"
               >
-                <FormControlLabel value="eida" control={<Radio checked={level === "eida"} onChange={e => setLevel(e.target.value)}/>} label="EIDA" />
-                <FormControlLabel value="node" control={<Radio checked={level === "node"} onChange={e => setLevel(e.target.value)}/>} label="Node" />
-                <FormControlLabel value="network" control={<Radio checked={level === "network"} onChange={e => setLevel(e.target.value)}/>} label="Network" />
+                <FormControlLabel value="eida" control={<Radio checked={level === "eida"} onChange={e => {setLevel(e.target.value); setNode([]); setInputNode(""); setNetwork([]); setInputNetwork(""); setStation("");}}/>} label="EIDA" />
+                <FormControlLabel value="node" control={<Radio checked={level === "node"} onChange={e => {setLevel(e.target.value); setNetwork([]); setInputNetwork(""); setStation("");}}/>} label="Node" />
+                <FormControlLabel value="network" control={<Radio checked={level === "network"} onChange={e => {setLevel(e.target.value); setStation("");}}/>} label="Network" />
                 {isAuthenticated && (<FormControlLabel value="station" control={<Radio checked={level === "station"} onChange={e => setLevel(e.target.value)}/>} label="Station" />)}
               </RadioGroup>
             </FormControl>
@@ -229,7 +229,7 @@ function App() {
                 freeSolo
                 multiple
                 onInputChange={e => setInputNode(e.target.value)}
-                onChange={(e, nv) => setNode(nv)}
+                onChange={(e, nv) => {setNode(nv); setInputNode("");}}
                 options={options}
                 open={open}
                 onOpen={() => setOpen(true)}
