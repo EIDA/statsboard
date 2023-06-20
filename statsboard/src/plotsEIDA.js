@@ -362,6 +362,8 @@ export function makePlotsEIDA(startTime, endTime) {
             }]
           };
           Plotly.newPlot('country-plots', mapData, mapLayout, {displaylogo: false});
+          const mapAndBoxes = document.getElementById('mapAndBoxes');
+          mapAndBoxes.style.backgroundColor = 'white';
         })
         .catch((error) => console.log(error))
         .finally(() => {

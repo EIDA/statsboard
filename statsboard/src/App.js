@@ -1,6 +1,20 @@
 import './App.css';
-import { useState } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import Plotly from 'plotly.js-dist';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Autocomplete from '@mui/material/Autocomplete';
+import CircularProgress from '@mui/material/CircularProgress';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import FormControl from '@mui/material/FormControl';
+import FormLabel from '@mui/material/FormLabel';
+import Checkbox from '@mui/material/Checkbox';
+import Grid from '@mui/material/Grid';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { makePlotsEIDA } from './plotsEIDA.js';
 import { makePlotsNode } from './plotsNode.js';
 import { makePlotsNetwork } from './plotsNetwork.js';
@@ -12,8 +26,11 @@ function App() {
   const [endTime, setEndTime] = useState(undefined);
   const [level, setLevel] = useState("eida");
   const [showError, setShowError] = useState("");
-  const [node, setNode] = useState("");
-  const [network, setNetwork] = useState("");
+  const [node, setNode] = useState([]);
+  const [inputNode, setInputNode] = useState("");
+  const [network, setNetwork] = useState([]);
+  const [inputNetwork, setInputNetwork] = useState("");
+  const [station, setStation] = useState("");
 
   function handleClick() {
     if (!showError) {
@@ -33,6 +50,8 @@ function App() {
       Plotly.purge('month-plots');
       Plotly.purge('year-plots');
       Plotly.purge('country-plots');
+      const mapAndBoxes = document.getElementById('mapAndBoxes');
+      mapAndBoxes.style.backgroundColor = '#f5f5f5';
     }
     // clear checkboxes for map plot
     const nodeCheckboxesContainer = document.getElementById('nns-checkboxes');
@@ -46,6 +65,16 @@ function App() {
     }
     // otherwise clear error message
     setShowError("");
+    // helper function for parameter passing
+    function paramToPass(lst, str) {
+      if (lst.length !== 0 && str) {
+        return `${lst.join(',')},${str}`;
+      } else if (lst.length !== 0) {
+          return lst.join(',');
+      } else {
+        return str;
+      }
+    }
     // delay execution to allow React to update the page and create the loading-msg element, otherwise error pops up
     setTimeout(() => {
       switch(level) {
@@ -53,10 +82,10 @@ function App() {
           makePlotsEIDA(startTime, endTime);
           break;
         case "node":
-          makePlotsNode(startTime, endTime, node);
+          makePlotsNode(startTime, endTime, paramToPass(node, inputNode));
           break;
         case "network":
-          makePlotsNetwork(startTime, endTime, node, network)
+          makePlotsNetwork(startTime, endTime, paramToPass(node, inputNode), isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork));
           break;
         default:
           setShowError("Plots for Station level are not implemented yet!");
@@ -65,62 +94,208 @@ function App() {
     }, 200);
   }
 
+  // make a call to retrieve list of nodes
+  async function get_nodes() {
+    try {
+      const response = await fetch('https://ws.resif.fr/eidaws/statistics/1/nodes');
+      if (!response.ok) {
+        throw new Error('Failed to fetch nodes');
+      }
+      const data = await response.json();
+      return data.nodes.map(node => node.name).sort();
+    }
+    catch (error) {
+      console.error(error);
+      return [];
+    }
+  }
+  const [open, setOpen] = useState(false);
+  const [options, setOptions] = useState([]);
+  const loading = open && options.length === 0;
+  useEffect(() => {
+    let active = true;
+    if (!loading) {
+      return undefined;
+    }
+    (async () => {
+      let nodes = await get_nodes();
+      if (active) {
+        setOptions(nodes);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [loading]);
+  useEffect(() => {
+    if (!open) {
+      setOptions([]);
+    }
+  }, [open]);
+
+  // make a call to retrieve list of networks
+  async function get_networks() {
+    try {
+      const response = await fetch('https://ws.resif.fr/eidaws/statistics/1/networks');
+      if (!response.ok) {
+        throw new Error('Failed to fetch networks');
+      }
+      const data = await response.json();
+      return Array.from(new Set(data.networks.map(net => net.name))).sort();
+    }
+    catch (error) {
+      console.error(error);
+      return [];
+    }
+  }
+  const [openNet, setOpenNet] = useState(false);
+  const [optionsNet, setOptionsNet] = useState([]);
+  const loadingNet = openNet && optionsNet.length === 0;
+  useEffect(() => {
+    let activeNet = true;
+    if (!loadingNet) {
+      return undefined;
+    }
+    (async () => {
+      let networks = await get_networks();
+      if (activeNet) {
+        setOptionsNet(networks);
+      }
+    })();
+    return () => {
+      activeNet = false;
+    };
+  }, [loadingNet]);
+  useEffect(() => {
+    if (!openNet) {
+      setOptionsNet([]);
+    }
+  }, [openNet]);
+
   return (
     <div className="App">
-      <h1>EIDA Statistics Dashboard</h1>
-      <div className="info">
-        This is a dashboard UI which allows users to explore <a href="http://www.orfeus-eu.org/data/eida/">EIDA</a> usage statistics in the form of plots.
-        For more details, visit the <a href="https://ws.resif.fr/eidaws/statistics/1/">statistics webservice.</a>
-      </div>
-      <div>
-        <input type="checkbox" checked={isAuthenticated} onChange={() => setIsAuthenticated(!isAuthenticated)} />
-        <label>Authentication</label>
-        {isAuthenticated && (
-          <div>
-            <label>Upload token file: </label>
-            <input type="file" onChange={(event) => setAuthTokenFile(event.target.files[0])} />
-            <div className="upload-note">
-              To redeem an EIDA authentication token file visit <a href="https://geofon.gfz-potsdam.de/eas/">https://geofon.gfz-potsdam.de/eas</a>.
-            </div>
+      <Grid id="form-container" container spacing={2}>
+        <Grid id="form-left" item xs={5}>
+          <h1>EIDA Statistics Dashboard</h1>
+          <div className="info">
+            Dashboard UI to explore <a href="http://www.orfeus-eu.org/data/eida/">EIDA</a> usage statistics in the form of plots.<br></br>
+            For more details, visit the <a href="https://ws.resif.fr/eidaws/statistics/1/">statistics webservice.</a>
           </div>
-        )}
-      </div>
-      <div>
-        <label>Start time: </label>
-        <input type="month" value={startTime} onChange={(event) => setStartTime(event.target.value)} />
-      </div>
-      <div>
-        <label>End time: </label>
-        <input type="month" value={endTime} onChange={(event) => setEndTime(event.target.value)} />
-      </div>
-      <div>
-        <label>Level: </label>
-        <input type="radio" name="level" value="eida" checked={level === "eida" || (!isAuthenticated && level === "station")} onChange={e => setLevel(e.target.value)} />
-        <label>EIDA </label>
-        <input type="radio" name="level" value="node" checked={level === "node"} onChange={e => setLevel(e.target.value)} />
-        <label>Node </label>
-        <input type="radio" name="level" value="network" checked={level === "network"} onChange={e => setLevel(e.target.value)} />
-        <label>Network </label>
-        {isAuthenticated && (
-          <>
-            <input type="radio" name="level" value="station" checked={level === "station"} onChange={e => setLevel(e.target.value)} />
-            <label>Station </label>
-          </>
-        )}
-      </div>
-      {level !== "eida" && (
-        <div>
-          <label>Node: </label>
-          <input type="text" value={node} onChange={e => setNode(e.target.value)} />
-        </div>
-      )}
-      {level === "network" && (
-        <div>
-          <label>Network: </label>
-          <input type="text" value={network} onChange={e => setNetwork(e.target.value)} />
-        </div>
-      )}
-      <button onClick={handleClick}>Make Plots</button>
+          <div>
+            <FormControlLabel control={<Checkbox checked={isAuthenticated} onChange={() => {setIsAuthenticated(!isAuthenticated); setLevel("eida");}}/>} label="Authentication" />
+            {isAuthenticated && (
+              <div>
+                <label>Upload token file: </label>
+                <input type="file" onChange={(event) => setAuthTokenFile(event.target.files[0])} />
+                <div className="upload-note">
+                  To redeem an EIDA authentication token file visit <a href="https://geofon.gfz-potsdam.de/eas/">https://geofon.gfz-potsdam.de/eas</a>.
+                </div>
+              </div>
+            )}
+          </div>
+        </Grid>
+        <Grid item xs={5} mt={2}>
+          <div>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker label="Start Time" sx={{ my: 1 }} views={['year', 'month']} slotProps={{ textField: { size: 'small' } }} onChange={(newValue) => (newValue ? setStartTime(newValue.$y+'-'+(newValue.$M+1)) : setStartTime(undefined))} />
+            </LocalizationProvider>
+          </div>
+          <div>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker label="End Time" sx={{ my: 1 }} views={['year', 'month']} slotProps={{ textField: { size: 'small' } }} onChange={(newValue) => (newValue ? setEndTime(newValue.$y+'-'+(newValue.$M+1)) : setEndTime(undefined))} />
+            </LocalizationProvider>
+          </div>
+          <div>
+            <FormControl>
+              <FormLabel id="demo-row-radio-buttons-group-label">Level</FormLabel>
+              <RadioGroup
+                row
+                aria-labelledby="demo-row-radio-buttons-group-label"
+                name="row-radio-buttons-group"
+              >
+                <FormControlLabel value="eida" control={<Radio checked={level === "eida"} onChange={e => setLevel(e.target.value)}/>} label="EIDA" />
+                <FormControlLabel value="node" control={<Radio checked={level === "node"} onChange={e => setLevel(e.target.value)}/>} label="Node" />
+                <FormControlLabel value="network" control={<Radio checked={level === "network"} onChange={e => setLevel(e.target.value)}/>} label="Network" />
+                {isAuthenticated && (<FormControlLabel value="station" control={<Radio checked={level === "station"} onChange={e => setLevel(e.target.value)}/>} label="Station" />)}
+              </RadioGroup>
+            </FormControl>
+          </div>
+          {level !== "eida" && (
+            <div>
+              <Autocomplete
+                className="autocomplete"
+                sx={{ my: 1, minWidth: 300 }}
+                size="small"
+                freeSolo
+                multiple
+                onInputChange={e => setInputNode(e.target.value)}
+                onChange={(e, nv) => setNode(nv)}
+                options={options}
+                open={open}
+                onOpen={() => setOpen(true)}
+                onClose={() => setOpen(false)}
+                isOptionEqualToValue={(option, value) => option === value}
+                loading={loading}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Node"
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <Fragment>
+                          {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                          {params.InputProps.endAdornment}
+                        </Fragment>
+                      ),
+                    }}
+                  />
+                )}
+              />
+            </div>
+          )}
+          {(level === "network" || level === "station") && (
+            <div>
+            <Autocomplete
+              className="autocomplete"
+              sx={{ my: 1, minWidth: 300 }}
+              size="small"
+              freeSolo
+              multiple={isAuthenticated}
+              onInputChange={e => setInputNetwork(e.target.value)}
+              onChange={(e, nv) => setNetwork(nv)}
+              options={optionsNet}
+              open={openNet}
+              onOpen={() => setOpenNet(true)}
+              onClose={() => setOpenNet(false)}
+              isOptionEqualToValue={(option, value) => option === value}
+              loading={loadingNet}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Network"
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <Fragment>
+                        {loadingNet ? <CircularProgress color="inherit" size={20} /> : null}
+                        {params.InputProps.endAdornment}
+                      </Fragment>
+                    ),
+                  }}
+                />
+              )}
+            />
+            </div>
+          )}
+          {level === "station" && (
+            <div>
+              <TextField label="Station" sx={{ my: 1 }} size="small" variant="outlined" value={station} onChange={e => setStation(e.target.value)} />
+            </div>
+          )}
+        </Grid>
+      </Grid>
+      <Button sx={{ m: 0.5 }} variant="contained" onClick={handleClick}>Make Plots</Button>
       {showError && (
         <div className="error-message">
           {showError}
@@ -129,28 +304,26 @@ function App() {
       {!showError && (
         <>
           <div id="loading-msg"></div>
-          <div className="total-wrapper">
-            <div className="error-plot" id="error-total"></div>
-            <div className="total-plots">
-              <div id="total-clients"></div>
-              <div id="total-bytes"></div>
-              <div id="total-requests"></div>
-            </div>
-          </div>
-          <div className="month-wrapper">
-            <div className="error-plot" id="error-month"></div>
-            <div id="month-plots"></div>
-          </div>
-          <div className="year-wrapper">
-            <div className="error-plot" id="error-year"></div>
-            <div id="year-plots"></div>
-          </div>
-          <div className="map-wrapper">
-            <div className="error-plot" id="error-map"></div>
-            <div className="mapAndBoxes">
-              <div id="country-plots"></div>
-              <div id="nns-checkboxes"></div>
-            </div>
+          <div className="error-plot" id="error-total"></div>
+          <Grid container spacing={2}>
+            <Grid item xs={12} lg={4}>
+              <div className="plot" id="total-clients"></div>
+            </Grid>
+            <Grid item xs={12} lg={4}>
+              <div className="plot" id="total-bytes"></div>
+            </Grid>
+            <Grid item xs={12} lg={4}>
+              <div className="plot" id="total-requests"></div>
+            </Grid>
+          </Grid>
+          <div className="error-plot" id="error-month"></div>
+          <div className="plot" id="month-plots"></div>
+          <div className="error-plot" id="error-year"></div>
+          <div className="plot" id="year-plots"></div>
+          <div className="error-plot" id="error-map"></div>
+          <div id="mapAndBoxes">
+            <div id="country-plots"></div>
+            <div id="nns-checkboxes"></div>
           </div>
         </>
       )}
