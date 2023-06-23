@@ -55,15 +55,24 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
           }
           return 0;
         });
-        // calculate hll values for total clients all networks indicator plot
+        // calculate hll values for shared networks and for total clients all networks indicator plot
+        let foundNets = {};
         let hll = new HLL(11, 5);
         data.results.forEach((result) => {
+          const network = result.network || " ";
+          const clients = result.hll_clients;
+          if (foundNets[network]) {
+            foundNets[network].union(fromHexString(result.hll_clients).hllSet);
+          } else {
+            foundNets[network] = fromHexString(clients).hllSet;
+          }
           hll.union(fromHexString(result.hll_clients).hllSet);
         });
+        console.log(foundNets);
         // clients plot, per network pie at first
         const pieDataClients = {
-          values: data.results.map(result => result.clients),
-          labels: data.results.map(result => result.network || " "),
+          values: Object.values(foundNets).map(value => value.cardinality()),
+          labels: Object.keys(foundNets),
           type: 'pie',
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
           sort: false
@@ -278,18 +287,36 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
           });
           clientsAllNetworks[networksSorted.length - 1] = Object.values(hlls).map(hll => hll.cardinality());
           // show clients at first
+          // take care the case of shared networks
           const barData = networksSorted.map(network => {
-              const networkResults = data.results.filter(result => result.network === network);
-              return {
-                x: networkResults.map(result => result.date),
-                y1: networkResults.map(result => result.clients),
-                y2: networkResults.map(result => result.bytes),
-                y3: networkResults.map(result => result.nb_reqs),
-                y4: networkResults.map(result => result.nb_successful_reqs),
-                y5: networkResults.map(result => result.nb_reqs - result.nb_successful_reqs),
-                name: network,
-                type: 'bar'
+            const networkResults = data.results.filter(result => result.network === network);
+            // group results by date
+            const groupedResults = networkResults.reduce((grouped, result) => {
+              if (!grouped[result.date]) {
+                grouped[result.date] = [];
               }
+              grouped[result.date].push(result);
+              return grouped;
+            }, {});
+            // calculate aggregated values for each date
+            const aggregatedResults = Object.entries(groupedResults).map(([date, results]) => {
+              const y1 = results.reduce((acc, result) => acc.union(fromHexString(result.hll_clients).hllSet), new HLL(11, 5));
+              const y2 = results.reduce((sum, result) => sum + result.bytes, 0);
+              const y3 = results.reduce((sum, result) => sum + result.nb_reqs, 0);
+              const y4 = results.reduce((sum, result) => sum + result.nb_successful_reqs, 0);
+              const y5 = results.reduce((sum, result) => sum + (result.nb_reqs - result.nb_successful_reqs), 0);
+              return {date, y1, y2, y3, y4, y5};
+            });
+            return {
+              x: aggregatedResults.map(result => result.date),
+              y1: aggregatedResults.map(result => result.y1.cardinality()),
+              y2: aggregatedResults.map(result => result.y2),
+              y3: aggregatedResults.map(result => result.y3),
+              y4: aggregatedResults.map(result => result.y4),
+              y5: aggregatedResults.map(result => result.y5),
+              name: network,
+              type: 'bar'
+            };
           });
           let barLayout = {
             height: 500,
