@@ -96,6 +96,7 @@ export function makePlotsNode(startTime, endTime, node) {
               title: 'Total number of unique users*',
               annotations: [
                 {
+                  xshift: -40,
                   y: -0.3,
                   xref: 'paper',
                   yref: 'paper',
@@ -122,6 +123,7 @@ export function makePlotsNode(startTime, endTime, node) {
                         title: 'Total number of unique users*',
                         annotations: [
                           {
+                            xshift: -40,
                             y: -0.3,
                             xref: 'paper',
                             yref: 'paper',
