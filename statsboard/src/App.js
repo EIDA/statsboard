@@ -85,7 +85,12 @@ function App() {
           makePlotsNode(startTime, endTime, paramToPass(node, inputNode));
           break;
         case "network":
-          makePlotsNetwork(startTime, endTime, paramToPass(node, inputNode), isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork));
+          if ((isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork)).includes(',')
+                || (isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork)) === "") {
+            makePlotsNetwork(startTime, endTime, paramToPass(node, inputNode), isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork));
+          } else {
+            makePlotsNetwork(startTime, endTime, paramToPass(node, inputNode), isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork), true);
+          }
           break;
         default:
           setShowError("Plots for Station level are not implemented yet!");
@@ -263,7 +268,7 @@ function App() {
               freeSolo
               multiple={isAuthenticated}
               onInputChange={e => setInputNetwork(e.target.value)}
-              onChange={(e, nv) => setNetwork(nv)}
+              onChange={(e, nv) => {setNetwork(nv); setInputNetwork("");}}
               options={optionsNet}
               open={openNet}
               onOpen={() => setOpenNet(true)}
