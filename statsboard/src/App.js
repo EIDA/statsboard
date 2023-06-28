@@ -85,7 +85,12 @@ function App() {
           makePlotsNode(startTime, endTime, paramToPass(node, inputNode));
           break;
         case "network":
-          makePlotsNetwork(startTime, endTime, paramToPass(node, inputNode), isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork));
+          if ((isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork)).includes(',')
+                || (isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork)) === "") {
+            makePlotsNetwork(startTime, endTime, paramToPass(node, inputNode), isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork));
+          } else {
+            makePlotsNetwork(startTime, endTime, paramToPass(node, inputNode), isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork), true);
+          }
           break;
         default:
           setShowError("Plots for Station level are not implemented yet!");
@@ -141,7 +146,24 @@ function App() {
         throw new Error('Failed to fetch networks');
       }
       const data = await response.json();
-      return Array.from(new Set(data.networks.map(net => net.name))).sort();
+      // filter networks according to the node field
+      let networkNodes = new Set();
+      if (Array.isArray(node)) {
+        node.forEach(n => networkNodes.add(n));
+      }
+      if (typeof inputNode === 'string' && inputNode !== "") {
+        inputNode.split(',').forEach(n => networkNodes.add(n));
+      }
+      if (networkNodes.size === 0) {
+        setBroughtNets(true);
+        return Array.from(new Set(data.networks.map(net => net.name))).sort();
+      } else {
+        let filteredNetworks = data.networks.filter(network => {
+          return Array.from(networkNodes).includes(network.node);
+        });
+        setBroughtNets(true);
+        return Array.from(new Set(filteredNetworks.map(net => net.name))).sort();
+      }
     }
     catch (error) {
       console.error(error);
@@ -150,7 +172,8 @@ function App() {
   }
   const [openNet, setOpenNet] = useState(false);
   const [optionsNet, setOptionsNet] = useState([]);
-  const loadingNet = openNet && optionsNet.length === 0;
+  const [broughtNets, setBroughtNets] = useState(false);
+  const loadingNet = openNet && !broughtNets;
   useEffect(() => {
     let activeNet = true;
     if (!loadingNet) {
@@ -263,11 +286,11 @@ function App() {
               freeSolo
               multiple={isAuthenticated}
               onInputChange={e => setInputNetwork(e.target.value)}
-              onChange={(e, nv) => setNetwork(nv)}
+              onChange={(e, nv) => {setNetwork(nv); setInputNetwork("");}}
               options={optionsNet}
               open={openNet}
               onOpen={() => setOpenNet(true)}
-              onClose={() => setOpenNet(false)}
+              onClose={() => {setOpenNet(false); setBroughtNets(false);}}
               isOptionEqualToValue={(option, value) => option === value}
               loading={loadingNet}
               renderInput={(params) => (

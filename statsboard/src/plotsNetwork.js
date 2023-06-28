@@ -2,7 +2,8 @@ import Plotly from 'plotly.js-dist';
 import ReactDOM from 'react-dom/client';
 import {HLL, fromHexString} from './js_hll'
 
-export function makePlotsNetwork(startTime, endTime, node, network) {
+export function makePlotsNetwork(startTime, endTime, node, net, single=false) {
+// if single=true toggle mode for one (shared) network, i.e. show statistics per node that shares this network
 
   // show message while loading
   let loadingMsg = document.getElementById("loading-msg");
@@ -22,7 +23,7 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
   mapPlots();
 
   function totalPlots() {
-    const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}${network ? `&network=${network}` : ''}&level=network&hllvalues=true&format=json`;
+    const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}${net ? `&network=${net}` : ''}&level=network&hllvalues=true&format=json`;
     fetch(url)
       .then((response) => {
         if (response.ok) {
@@ -49,8 +50,7 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
           const networkB = b.network;
           if (networkA < networkB) {
             return -1;
-          }
-          else if (networkA > networkB) {
+          } else if (networkA > networkB) {
             return 1;
           }
           return 0;
@@ -59,7 +59,12 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
         let foundNets = {};
         let hll = new HLL(11, 5);
         data.results.forEach((result) => {
-          const network = result.network || " ";
+          let network;
+          if (single) {
+            network = result.node;
+          } else {
+            network = result.network || "Unsuccessful<br>requests";
+          }
           const clients = result.hll_clients;
           if (foundNets[network]) {
             foundNets[network].union(fromHexString(result.hll_clients).hllSet);
@@ -68,24 +73,44 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
           }
           hll.union(fromHexString(result.hll_clients).hllSet);
         });
-        console.log(foundNets);
+        // group slices with less than 3% into one
+        const thresholdClients = Object.values(foundNets).reduce((total, value) => total + value.cardinality(), 0) * 0.03;
+        let groupedDataClients = {values: [], labels: []};
+        Object.entries(foundNets).forEach(([network, value]) => {
+          if (value.cardinality() >= thresholdClients) {
+            groupedDataClients.values.push(value);
+            if (single) {
+              groupedDataClients.labels.push(`${net} (${network})`);
+            } else {
+              groupedDataClients.labels.push(network);
+            }
+          } else {
+            if (!groupedDataClients.labels.includes('Less than 3%')) {
+              groupedDataClients.values.push(value);
+              groupedDataClients.labels.push('Less than 3%');
+            } else {
+              const index = groupedDataClients.labels.indexOf('Less than 3%');
+              groupedDataClients.values[index].union(value);
+            }
+          }
+        });
         // clients plot, per network pie at first
-        const pieDataClients = {
-          values: Object.values(foundNets).map(value => value.cardinality()),
-          labels: Object.keys(foundNets),
+        let pieDataClients = {
+          values: groupedDataClients.values.map(value => value.cardinality()),
+          labels: groupedDataClients.labels,
           type: 'pie',
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
           sort: false
         };
         const pieLayoutClients = {
-          title: 'Total number of unique users*',
+          title: 'Total number of users* per network',
           annotations: [
             {
-              xshift: -50,
-              y: -0.3,
+              xshift: -20,
+              y: -0.25,
               xref: 'paper',
               yref: 'paper',
-              text: '*<i>Important note: The number of unique users is correct for each network.<br>However, the whole pie does not represent the real value of the total users for<br>all selected networks, as many clients may have asked data from multiple networks.<\i>',
+              text: '*<i>Important note: The number of unique users is correct for<br>each network. However, the whole pie does not represent<br>the real value of the total users for all selected networks, as<br>many clients may have asked data from multiple networks.<\i>',
               showarrow: false,
               font: {
                 family: 'Arial',
@@ -100,19 +125,19 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
               {
                 args: [
                   {
-                    values: [data.results.map(result => result.clients)],
+                    values: [groupedDataClients.values.map(value => value.cardinality())],
                     type: 'pie',
                     sort: false
                   },
                   {
-                    title: 'Total number of unique users*',
+                    title: 'Total number of users* per network',
                     annotations: [
                       {
-                        xshift: -50,
-                        y: -0.3,
+                        xshift: -20,
+                        y: -0.25,
                         xref: 'paper',
                         yref: 'paper',
-                        text: '*<i>Important note: The number of unique users is correct for each network.<br>However, the whole pie does not represent the real value of the total users for<br>all selected networks, as many clients may have asked data from multiple networks.<\i>',
+                        text: '*<i>Important note: The number of unique users is correct for<br>each network. However, the whole pie does not represent<br>the real value of the total users for all selected networks, as<br>many clients may have asked data from multiple networks.<\i>',
                         showarrow: false,
                         font: {
                           family: 'Arial',
@@ -123,7 +148,7 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
                     ]
                   }
                 ],
-                label: 'Unique Users Per Network',
+                label: 'Users Per Network',
                 method: 'update'
               },
               // total clients for all specified networks indicator button
@@ -136,11 +161,11 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
                     number: { font: { size: 50 } }
                   },
                   {
-                    title: 'Total number of unique users of all specified networks',
+                    title: 'Total number of unique users of all networks',
                     annotations: []
                   }
                 ],
-                label: 'Unique Users All Networks',
+                label: 'Users All Networks',
                 method: 'update'
               }
             ],
@@ -151,9 +176,47 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
         Plotly.newPlot('total-clients', [pieDataClients], pieLayoutClients, {displaylogo: false});
 
         // bytes plot
+        // take care of shared networks
+        const sharedBytes = data.results.reduce((accumulator, result) => {
+          let network;
+          if (single) {
+            network = result.node;
+          } else {
+            network = result.network || "Unsuccessful<br>requests";
+          }
+          const index = accumulator.networks.indexOf(network);
+          if (index !== -1) {
+            accumulator.bytes[index] += result.bytes;
+          } else {
+            accumulator.bytes.push(result.bytes);
+            if (single) {
+              accumulator.networks.push(`${net} (${network})`);
+            } else {
+              accumulator.networks.push(network);
+            }
+          }
+          return accumulator;
+        }, { bytes: [], networks: [] });
+        // group slices with less than 3% into one
+        const thresholdBytes = data.results.reduce((total, result) => total + result.bytes, 0) * 0.03;
+        const groupedDataBytes = sharedBytes.networks.reduce((accumulator, network, index) => {
+          if (sharedBytes.bytes[index] >= thresholdBytes) {
+            accumulator.values.push(sharedBytes.bytes[index]);
+            accumulator.labels.push(network);
+          } else {
+            if (!accumulator.labels.includes('Less than 3%')) {
+              accumulator.values.push(sharedBytes.bytes[index]);
+              accumulator.labels.push('Less than 3%');
+            } else {
+              const lessThan3Index = accumulator.labels.indexOf('Less than 3%');
+              accumulator.values[lessThan3Index] += sharedBytes.bytes[index];
+            }
+          }
+          return accumulator;
+        }, { values: [], labels: [] });
         const pieDataBytes = {
-          values: data.results.map(result => result.bytes),
-          labels: data.results.map(result => result.network || " "),
+          values: groupedDataBytes.values,
+          labels: groupedDataBytes.labels,
           type: 'pie',
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
           sort: false
@@ -164,10 +227,86 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
         Plotly.newPlot('total-bytes', [pieDataBytes], pieLayoutBytes, {displaylogo: false});
 
         // requests plot
+        // take care of shared networks
+        const sharedReq = data.results.reduce((accumulator, result) => {
+          let network;
+          if (single) {
+            network = result.node;
+          } else {
+            network = result.network || "Unsuccessful<br>requests";
+          }
+          const index = accumulator.networks.indexOf(network);
+          if (index !== -1) {
+            accumulator.nb_reqs[index] += result.nb_reqs;
+            accumulator.nb_successful_reqs[index] += result.nb_successful_reqs;
+          } else {
+            accumulator.nb_reqs.push(result.nb_reqs);
+            accumulator.nb_successful_reqs.push(result.nb_successful_reqs);
+            if (single) {
+              accumulator.networks.push(`${net} (${network})`);
+            } else {
+              accumulator.networks.push(network);
+            }
+          }
+          return accumulator;
+        }, { nb_reqs: [], nb_successful_reqs: [], networks: [] });
+        // group slices with less than 3% into one for total requests
+        const thresholdTot = data.results.reduce((total, result) => total + result.nb_reqs, 0) * 0.03;
+        const groupedDataTot = sharedReq.networks.reduce((accumulator, network, index) => {
+          if (sharedReq.nb_reqs[index] >= thresholdTot) {
+            accumulator.values.push(sharedReq.nb_reqs[index]);
+            accumulator.labels.push(network);
+          } else {
+            if (!accumulator.labels.includes('Less than 3%')) {
+              accumulator.values.push(sharedReq.nb_reqs[index]);
+              accumulator.labels.push('Less than 3%');
+            } else {
+              const lessThan3Index = accumulator.labels.indexOf('Less than 3%');
+              accumulator.values[lessThan3Index] += sharedReq.nb_reqs[index];
+            }
+          }
+          return accumulator;
+        }, { values: [], labels: [] });
+        // group slices with less than 3% into one for successful requests
+        const thresholdSucc = data.results.reduce((total, result) => total + result.nb_successful_reqs, 0) * 0.03;
+        const groupedDataSucc = sharedReq.networks.reduce((accumulator, network, index) => {
+          if (sharedReq.nb_successful_reqs[index] >= thresholdSucc) {
+            accumulator.values.push(sharedReq.nb_successful_reqs[index]);
+            accumulator.labels.push(network);
+          } else {
+            if (!accumulator.labels.includes('Less than 3%')) {
+              accumulator.values.push(sharedReq.nb_successful_reqs[index]);
+              accumulator.labels.push('Less than 3%');
+            } else {
+              const lessThan3Index = accumulator.labels.indexOf('Less than 3%');
+              accumulator.values[lessThan3Index] += sharedReq.nb_successful_reqs[index];
+            }
+          }
+          return accumulator;
+        }, { values: [], labels: [] });
+        // group slices with less than 3% into one for unsuccessful requests
+        const thresholdUnsucc = data.results.reduce((total, result) => total + result.nb_reqs - result.nb_successful_reqs, 0) * 0.03;
+        const groupedDataUnsucc = sharedReq.networks.reduce((accumulator, network, index) => {
+          if (sharedReq.nb_reqs[index] - sharedReq.nb_successful_reqs[index] >= thresholdUnsucc) {
+            accumulator.values.push(sharedReq.nb_reqs[index] - sharedReq.nb_successful_reqs[index]);
+            accumulator.labels.push(network);
+          } else {
+            if (!accumulator.labels.includes('Less than 3%')) {
+              accumulator.values.push(sharedReq.nb_reqs[index] - sharedReq.nb_successful_reqs[index]);
+              accumulator.labels.push('Less than 3%');
+            } else {
+              const lessThan3Index = accumulator.labels.indexOf('Less than 3%');
+              accumulator.values[lessThan3Index] += sharedReq.nb_reqs[index] - sharedReq.nb_successful_reqs[index];
+            }
+          }
+          return accumulator;
+        },
+          { values: [], labels: [] }
+        );
         // show total requests at first
         const pieDataRequests = {
-          values: data.results.map(result => result.nb_reqs),
-          labels: data.results.map(result => result.network || " "),
+          values: groupedDataTot.values,
+          labels: groupedDataTot.labels,
           type: 'pie',
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
           sort: false
@@ -180,7 +319,8 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
               {
                 args: [
                   {
-                    values: [data.results.map(result => result.nb_reqs)],
+                    values: [groupedDataTot.values],
+                    labels: [groupedDataTot.labels],
                     type: 'pie',
                     sort: false
                   },
@@ -195,7 +335,8 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
               {
                 args: [
                   {
-                    values: [data.results.map(result => result.nb_successful_reqs)],
+                    values: [groupedDataSucc.values],
+                    labels: [groupedDataSucc.labels],
                     type: 'pie',
                     sort: false
                   },
@@ -210,7 +351,8 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
               {
                 args: [
                   {
-                    values: [data.results.map(result => result.nb_reqs - result.nb_successful_reqs)],
+                    values: [groupedDataUnsucc.values],
+                    labels: [groupedDataUnsucc.labels],
                     type: 'pie',
                     sort: false
                   },
@@ -234,10 +376,10 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
     function monthAndYearPlots(details = "month") {
       let url = null;
       if (details === "year") {
-        url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}${network ? `&network=${network}` : ''}&level=network&details=year&hllvalues=true&format=json`;
+        url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}${net ? `&network=${net}` : ''}&level=network&details=year&hllvalues=true&format=json`;
       }
       else {
-        url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}${network ? `&network=${network}` : ''}&level=network&details=month&hllvalues=true&format=json`;
+        url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}${net ? `&network=${net}` : ''}&level=network&details=month&hllvalues=true&format=json`;
       }
       fetch(url)
         .then((response) => {
@@ -271,7 +413,12 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
           }
         })
         .then((data) => {
-          const networksSorted = Array.from(new Set(data.results.map(result => result.network))).sort((a, b) => a.localeCompare(b)).reverse();
+          let networksSorted;
+          if (single) {
+            networksSorted = Array.from(new Set(data.results.map(result => result.node))).sort((a, b) => a.localeCompare(b)).reverse();
+          } else {
+            networksSorted = Array.from(new Set(data.results.map(result => result.network))).sort((a, b) => a.localeCompare(b)).reverse();
+          }
           // calculate hll values for total clients all networks bar plot
           let hlls = {};
           data.results.forEach(result => {
@@ -289,7 +436,12 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
           // show clients at first
           // take care the case of shared networks
           const barData = networksSorted.map(network => {
-            const networkResults = data.results.filter(result => result.network === network);
+            let networkResults;
+            if (single) {
+              networkResults = data.results.filter(result => result.node === network);
+            } else {
+              networkResults = data.results.filter(result => result.network === network);
+            }
             // group results by date
             const groupedResults = networkResults.reduce((grouped, result) => {
               if (!grouped[result.date]) {
@@ -314,7 +466,7 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
               y3: aggregatedResults.map(result => result.y3),
               y4: aggregatedResults.map(result => result.y4),
               y5: aggregatedResults.map(result => result.y5),
-              name: network,
+              name: single ? `${net} (${network})` : (network ? network : "Unsuccessful<br>requests"),
               type: 'bar'
             };
           });
@@ -324,7 +476,7 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
               b: 100
             },
             barmode: 'stack',
-            title: 'Number of unique users* per '+details,
+            title: 'Number of users* per '+details,
             xaxis: {
               title: details.charAt(0).toUpperCase() + details.slice(1),
               tickmode: 'linear'
@@ -359,7 +511,7 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
                       type: 'bar'
                     },
                     {
-                      title: 'Number of unique users* per '+details,
+                      title: 'Number of users* per '+details,
                       yaxis: {
                         title: 'Unique users*'
                       },
@@ -380,7 +532,7 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
                       ]
                     }
                   ],
-                  label: 'Unique Users Per Network',
+                  label: 'Users Per Network',
                   method: 'update'
                 },
                 // clients all specified networks button
@@ -401,7 +553,7 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
                       annotations: []
                     }
                   ],
-                  label: 'Unique Users All Networks',
+                  label: 'Users All Networks',
                   method: 'update'
                 },
                 // bytes button
@@ -505,7 +657,7 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
     }
 
     function mapPlots() {
-      const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}${network ? `&network=${network}` : ''}&level=network&details=country&hllvalues=true&format=json`;
+      const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}${net ? `&network=${net}` : ''}&level=network&details=country&hllvalues=true&format=json`;
       fetch(url)
         .then((response) => {
           if (response.ok) {
@@ -664,11 +816,16 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
           };
           Plotly.newPlot('country-plots', mapData, mapLayout, {displaylogo: false});
 
-          const networksSorted = Array.from(new Set(data.results.map(result => result.network))).sort((a, b) => a.localeCompare(b));
+          let networksSorted;
+          if (single) {
+            networksSorted = Array.from(new Set(data.results.map(result => result.node))).sort((a, b) => a.localeCompare(b));
+          } else {
+            networksSorted = Array.from(new Set(data.results.map(result => result.network))).sort((a, b) => a.localeCompare(b));
+          }
           let networkCheckboxes = networksSorted.map((network, index) => (
             <div key={index}>
               <input type="checkbox" id={`network-${index}`} value={network} defaultChecked onChange={handleCheckboxClick} />
-              <label htmlFor={`network-${index}`}>{network}</label>
+              <label htmlFor={`network-${index}`}>{single ? `${net} (${network})` : (network ? network : "Unsuccessful requests")}</label>
             </div>
           ));
           const networkCheckboxesContainer = document.getElementById('nns-checkboxes');
@@ -705,7 +862,12 @@ export function makePlotsNetwork(startTime, endTime, node, network) {
             checked.forEach((cb) => {
               selectedNetworks.push(cb.value);
             })
-            const filteredData = data.results.filter((result) => selectedNetworks.includes(result.network));
+            let filteredData;
+            if (single) {
+              filteredData = data.results.filter((result) => selectedNetworks.includes(result.node));
+            } else {
+              filteredData = data.results.filter((result) => selectedNetworks.includes(result.network));
+            }
             aggregatedResults = filteredData.reduce((aggregate, result) => {
               if (!aggregate[result.country]) {
                 aggregate[result.country] = {

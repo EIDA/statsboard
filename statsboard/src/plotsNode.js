@@ -93,13 +93,14 @@ export function makePlotsNode(startTime, endTime, node) {
               sort: false
             };
             const pieLayoutClients = {
-              title: 'Total number of unique users*',
+              title: 'Total number of users* per node',
               annotations: [
                 {
-                  y: -0.3,
+                  xshift: -20,
+                  y: -0.25,
                   xref: 'paper',
                   yref: 'paper',
-                  text: '*<i>Important note: The number of unique users is correct for each node.<br>However, the whole pie does not represent the real value of the total users for<br>all selected nodes, as many clients may have asked data from multiple nodes.<\i>',
+                  text: '*<i>Important note: The number of unique users is correct<br>for each node. However, the whole pie does not represent<br>the real value of the total users for all selected nodes, as<br>many clients may have asked data from multiple nodes.<\i>',
                   showarrow: false,
                   font: {
                     family: 'Arial',
@@ -119,13 +120,14 @@ export function makePlotsNode(startTime, endTime, node) {
                         sort: false
                       },
                       {
-                        title: 'Total number of unique users*',
+                        title: 'Total number of users* per node',
                         annotations: [
                           {
-                            y: -0.3,
+                            xshift: -20,
+                            y: -0.25,
                             xref: 'paper',
                             yref: 'paper',
-                            text: '*<i>Important note: The number of unique users is correct for each node.<br>However, the whole pie does not represent the real value of the total users for<br>all selected nodes, as many clients may have asked data from multiple nodes.<\i>',
+                            text: '*<i>Important note: The number of unique users is correct<br>for each node. However, the whole pie does not represent<br>the real value of the total users for all selected nodes, as<br>many clients may have asked data from multiple nodes.<\i>',
                             showarrow: false,
                             font: {
                               family: 'Arial',
@@ -136,7 +138,7 @@ export function makePlotsNode(startTime, endTime, node) {
                         ]
                       }
                     ],
-                    label: 'Unique Users Per Node',
+                    label: 'Users Per Node',
                     method: 'update'
                   },
                   // total clients for all specified nodes indicator button
@@ -149,11 +151,11 @@ export function makePlotsNode(startTime, endTime, node) {
                         number: { font: { size: 50 } }
                       },
                       {
-                        title: 'Total number of unique users of all specified nodes',
+                        title: 'Total number of unique users of all nodes',
                         annotations: []
                       }
                     ],
-                    label: 'Unique Users All Nodes',
+                    label: 'Users All Nodes',
                     method: 'update'
                   }
                 ],
@@ -327,7 +329,7 @@ export function makePlotsNode(startTime, endTime, node) {
                   b: 100
                 },
                 barmode: 'stack',
-                title: 'Number of unique users* per '+details,
+                title: 'Number of users* per '+details,
                 xaxis: {
                   title: details.charAt(0).toUpperCase() + details.slice(1),
                   tickmode: 'linear'
@@ -362,7 +364,7 @@ export function makePlotsNode(startTime, endTime, node) {
                           type: 'bar'
                         },
                         {
-                          title: 'Number of unique users* per '+details,
+                          title: 'Number of users* per '+details,
                           yaxis: {
                             title: 'Unique users*'
                           },
@@ -383,7 +385,7 @@ export function makePlotsNode(startTime, endTime, node) {
                           ]
                         }
                       ],
-                      label: 'Unique Users Per Node',
+                      label: 'Users Per Node',
                       method: 'update'
                     },
                     // clients all specified nodes button
@@ -404,7 +406,7 @@ export function makePlotsNode(startTime, endTime, node) {
                           annotations: []
                         }
                       ],
-                      label: 'Unique Users All Nodes',
+                      label: 'Users All Nodes',
                       method: 'update'
                     },
                     // bytes button
