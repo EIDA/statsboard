@@ -146,7 +146,24 @@ function App() {
         throw new Error('Failed to fetch networks');
       }
       const data = await response.json();
-      return Array.from(new Set(data.networks.map(net => net.name))).sort();
+      // filter networks according to the node field
+      let networkNodes = new Set();
+      if (Array.isArray(node)) {
+        node.forEach(n => networkNodes.add(n));
+      }
+      if (typeof inputNode === 'string' && inputNode !== "") {
+        inputNode.split(',').forEach(n => networkNodes.add(n));
+      }
+      if (networkNodes.size === 0) {
+        setBroughtNets(true);
+        return Array.from(new Set(data.networks.map(net => net.name))).sort();
+      } else {
+        let filteredNetworks = data.networks.filter(network => {
+          return Array.from(networkNodes).includes(network.node);
+        });
+        setBroughtNets(true);
+        return Array.from(new Set(filteredNetworks.map(net => net.name))).sort();
+      }
     }
     catch (error) {
       console.error(error);
@@ -155,7 +172,8 @@ function App() {
   }
   const [openNet, setOpenNet] = useState(false);
   const [optionsNet, setOptionsNet] = useState([]);
-  const loadingNet = openNet && optionsNet.length === 0;
+  const [broughtNets, setBroughtNets] = useState(false);
+  const loadingNet = openNet && !broughtNets;
   useEffect(() => {
     let activeNet = true;
     if (!loadingNet) {
@@ -272,7 +290,7 @@ function App() {
               options={optionsNet}
               open={openNet}
               onOpen={() => setOpenNet(true)}
-              onClose={() => setOpenNet(false)}
+              onClose={() => {setOpenNet(false); setBroughtNets(false);}}
               isOptionEqualToValue={(option, value) => option === value}
               loading={loadingNet}
               renderInput={(params) => (
