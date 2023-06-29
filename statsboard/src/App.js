@@ -30,8 +30,7 @@ function App() {
   const [inputNode, setInputNode] = useState("");
   const [network, setNetwork] = useState([]);
   const [inputNetwork, setInputNetwork] = useState("");
-  const [station, setStation] = useState([]);
-  const [inputStation, setInputStation] = useState("");
+  const [station, setStation] = useState("");
 
   function handleClick() {
     if (!showError) {
@@ -214,7 +213,7 @@ function App() {
           </div>
           <div>
             <FormControlLabel control={<Checkbox checked={isAuthenticated} onChange={() => {setIsAuthenticated(!isAuthenticated); setAuthTokenFile(undefined);
-              setLevel("eida"); setNode([]); setInputNode(""); setNetwork([]); setInputNetwork(""); setStation([]); setInputStation("");}}/>} label="Authentication" />
+              setLevel("eida"); setNode([]); setInputNode(""); setNetwork([]); setInputNetwork(""); setStation("");}}/>} label="Authentication" />
             {isAuthenticated && (
               <div>
                 <label>Upload token file: </label>
@@ -248,11 +247,11 @@ function App() {
                 name="row-radio-buttons-group"
               >
                 <FormControlLabel value="eida" control={<Radio checked={level === "eida"} onChange={e => {setLevel(e.target.value); setNode([]);
-                  setInputNode(""); setNetwork([]); setInputNetwork(""); setStation([]); setInputStation("");}}/>} label="EIDA" />
+                  setInputNode(""); setNetwork([]); setInputNetwork(""); setStation("");}}/>} label="EIDA" />
                 <FormControlLabel value="node" control={<Radio checked={level === "node"} onChange={e => {setLevel(e.target.value); setNetwork([]);
-                  setInputNetwork(""); setStation([]); setInputStation("");}}/>} label="Node" />
+                  setInputNetwork(""); setStation("");}}/>} label="Node" />
                 <FormControlLabel value="network" control={<Radio checked={level === "network"} onChange={e => {setLevel(e.target.value);
-                  setStation([]);setInputStation("");}}/>} label="Network" />
+                  setStation("")}}/>} label="Network" />
                 {isAuthenticated && (<FormControlLabel value="station" control={<Radio checked={level === "station"} onChange={e =>
                   setLevel(e.target.value)}/>} label="Station" />)}
               </RadioGroup>
