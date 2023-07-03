@@ -18,6 +18,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { makePlotsEIDA } from './plotsEIDA.js';
 import { makePlotsNode } from './plotsNode.js';
 import { makePlotsNetwork } from './plotsNetwork.js';
+import { makePlotsStation } from './plotsStation.js';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -99,8 +100,13 @@ function App() {
               isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork), true);
           }
           break;
+        case "station":
+          let fileSta = new FormData();
+          fileSta.append('file', authTokenFile);
+          makePlotsStation(fileSta, startTime, endTime, paramToPass(node, inputNode), paramToPass(network, inputNetwork), station);
+          break;
         default:
-          setShowError("Plots for Station level are not implemented yet!");
+          setShowError("Choose level to plot statistics!")
           return;
       }
     }, 200);
@@ -327,7 +333,7 @@ function App() {
           )}
           {level === "station" && (
             <div>
-              <TextField label="Station" sx={{ my: 1 }} size="small" variant="outlined" value={station} onChange={e => setStation(e.target.value)} />
+              <TextField label="Station" sx={{ my: 1, minWidth: 300 }} size="small" variant="outlined" value={station} onChange={e => setStation(e.target.value)} />
             </div>
           )}
         </Grid>
