@@ -18,6 +18,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { makePlotsEIDA } from './plotsEIDA.js';
 import { makePlotsNode } from './plotsNode.js';
 import { makePlotsNetwork } from './plotsNetwork.js';
+import { makePlotsStation } from './plotsStation.js';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -85,15 +86,27 @@ function App() {
           makePlotsNode(startTime, endTime, paramToPass(node, inputNode));
           break;
         case "network":
+          let file = new FormData();
+          file.append('file', authTokenFile);
+          // if multiple networks asked
           if ((isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork)).includes(',')
                 || (isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork)) === "") {
-            makePlotsNetwork(startTime, endTime, paramToPass(node, inputNode), isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork));
-          } else {
-            makePlotsNetwork(startTime, endTime, paramToPass(node, inputNode), isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork), true);
+            makePlotsNetwork(isAuthenticated, file, startTime, endTime, paramToPass(node, inputNode),
+              isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork));
+          }
+          // if single network asked
+          else {
+            makePlotsNetwork(isAuthenticated, file, startTime, endTime, paramToPass(node, inputNode),
+              isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork), true);
           }
           break;
+        case "station":
+          let fileSta = new FormData();
+          fileSta.append('file', authTokenFile);
+          makePlotsStation(fileSta, startTime, endTime, paramToPass(node, inputNode), paramToPass(network, inputNetwork), station);
+          break;
         default:
-          setShowError("Plots for Station level are not implemented yet!");
+          setShowError("Choose level to plot statistics!")
           return;
       }
     }, 200);
@@ -205,7 +218,8 @@ function App() {
             For more details, visit the <a href="https://ws.resif.fr/eidaws/statistics/1/">statistics webservice.</a>
           </div>
           <div>
-            <FormControlLabel control={<Checkbox checked={isAuthenticated} onChange={() => {setIsAuthenticated(!isAuthenticated); setLevel("eida");}}/>} label="Authentication" />
+            <FormControlLabel control={<Checkbox checked={isAuthenticated} onChange={() => {setIsAuthenticated(!isAuthenticated); setAuthTokenFile(undefined);
+              setLevel("eida"); setNode([]); setInputNode(""); setNetwork([]); setInputNetwork(""); setStation("");}}/>} label="Authentication" />
             {isAuthenticated && (
               <div>
                 <label>Upload token file: </label>
@@ -220,12 +234,14 @@ function App() {
         <Grid item xs={5} mt={2}>
           <div>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker label="Start Time" sx={{ my: 1 }} views={['year', 'month']} slotProps={{ textField: { size: 'small' } }} onChange={(newValue) => (newValue ? setStartTime(newValue.$y+'-'+(newValue.$M+1)) : setStartTime(undefined))} />
+              <DatePicker label="Start Time" sx={{ my: 1 }} views={['year', 'month']} slotProps={{ textField: { size: 'small' } }} onChange={
+                (newValue) => (newValue ? setStartTime(newValue.$y+'-'+(newValue.$M+1)) : setStartTime(undefined))} />
             </LocalizationProvider>
           </div>
           <div>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker label="End Time" sx={{ my: 1 }} views={['year', 'month']} slotProps={{ textField: { size: 'small' } }} onChange={(newValue) => (newValue ? setEndTime(newValue.$y+'-'+(newValue.$M+1)) : setEndTime(undefined))} />
+              <DatePicker label="End Time" sx={{ my: 1 }} views={['year', 'month']} slotProps={{ textField: { size: 'small' } }} onChange={
+                (newValue) => (newValue ? setEndTime(newValue.$y+'-'+(newValue.$M+1)) : setEndTime(undefined))} />
             </LocalizationProvider>
           </div>
           <div>
@@ -236,10 +252,14 @@ function App() {
                 aria-labelledby="demo-row-radio-buttons-group-label"
                 name="row-radio-buttons-group"
               >
-                <FormControlLabel value="eida" control={<Radio checked={level === "eida"} onChange={e => {setLevel(e.target.value); setNode([]); setInputNode(""); setNetwork([]); setInputNetwork(""); setStation("");}}/>} label="EIDA" />
-                <FormControlLabel value="node" control={<Radio checked={level === "node"} onChange={e => {setLevel(e.target.value); setNetwork([]); setInputNetwork(""); setStation("");}}/>} label="Node" />
-                <FormControlLabel value="network" control={<Radio checked={level === "network"} onChange={e => {setLevel(e.target.value); setStation("");}}/>} label="Network" />
-                {isAuthenticated && (<FormControlLabel value="station" control={<Radio checked={level === "station"} onChange={e => setLevel(e.target.value)}/>} label="Station" />)}
+                <FormControlLabel value="eida" control={<Radio checked={level === "eida"} onChange={e => {setLevel(e.target.value); setNode([]);
+                  setInputNode(""); setNetwork([]); setInputNetwork(""); setStation("");}}/>} label="EIDA" />
+                <FormControlLabel value="node" control={<Radio checked={level === "node"} onChange={e => {setLevel(e.target.value); setNetwork([]);
+                  setInputNetwork(""); setStation("");}}/>} label="Node" />
+                <FormControlLabel value="network" control={<Radio checked={level === "network"} onChange={e => {setLevel(e.target.value);
+                  setStation("")}}/>} label="Network" />
+                {isAuthenticated && (<FormControlLabel value="station" control={<Radio checked={level === "station"} onChange={e =>
+                  setLevel(e.target.value)}/>} label="Station" />)}
               </RadioGroup>
             </FormControl>
           </div>
@@ -313,7 +333,7 @@ function App() {
           )}
           {level === "station" && (
             <div>
-              <TextField label="Station" sx={{ my: 1 }} size="small" variant="outlined" value={station} onChange={e => setStation(e.target.value)} />
+              <TextField label="Station" sx={{ my: 1, minWidth: 300 }} size="small" variant="outlined" value={station} onChange={e => setStation(e.target.value)} />
             </div>
           )}
         </Grid>
