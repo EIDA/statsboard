@@ -222,7 +222,7 @@ function App() {
               setLevel("eida"); setNode([]); setInputNode(""); setNetwork([]); setInputNetwork(""); setStation("");}}/>} label="Authentication" />
             {isAuthenticated && (
               <div>
-                <label>Upload token file: </label>
+                <label>Select token file: </label>
                 <input type="file" onChange={(event) => setAuthTokenFile(event.target.files[0])} />
                 <div className="upload-note">
                   To redeem an EIDA authentication token file visit <a href="https://geofon.gfz-potsdam.de/eas/">https://geofon.gfz-potsdam.de/eas</a>.

@@ -104,6 +104,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
           values: groupedDataClients.values.map(value => value.cardinality()),
           labels: groupedDataClients.labels,
           type: 'pie',
+          texttemplate: '%{value:.3s}',
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
           sort: false
         };
@@ -223,6 +224,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
           values: groupedDataBytes.values,
           labels: groupedDataBytes.labels,
           type: 'pie',
+          texttemplate: '%{value:.3s}',
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
           sort: false
         };
@@ -313,6 +315,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
           values: groupedDataTot.values,
           labels: groupedDataTot.labels,
           type: 'pie',
+          texttemplate: '%{value:.3s}',
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
           sort: false
         };

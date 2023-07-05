@@ -89,6 +89,7 @@ export function makePlotsNode(startTime, endTime, node) {
               marker: {
                 colors: Object.values(nodesColors)
               },
+              texttemplate: '%{value:.3s}',
               hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
               sort: false
             };
@@ -173,6 +174,7 @@ export function makePlotsNode(startTime, endTime, node) {
               marker: {
                 colors: Object.values(nodesColors)
               },
+              texttemplate: '%{value:.3s}',
               hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
               sort: false
             };
@@ -190,6 +192,7 @@ export function makePlotsNode(startTime, endTime, node) {
               marker: {
                 colors: Object.values(nodesColors)
               },
+              texttemplate: '%{value:.3s}',
               hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
               sort: false
             };

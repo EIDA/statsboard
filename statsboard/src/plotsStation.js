@@ -76,6 +76,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
           values: filteredResultsClients.map(result => result.clients),
           labels: filteredResultsClients.map(result => result.station),
           type: 'pie',
+          texttemplate: '%{value:.3s}',
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
           sort: false
         };
@@ -168,6 +169,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
           values: filteredResultsBytes.map(result => result.bytes),
           labels: filteredResultsBytes.map(result => result.station),
           type: 'pie',
+          texttemplate: '%{value:.3s}',
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
           sort: false
         };
@@ -192,6 +194,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
           values: filteredResultsReq.map(result => result.nb_reqs),
           labels: filteredResultsReq.map(result => result.station),
           type: 'pie',
+          texttemplate: '%{value:.3s}',
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
           sort: false
         };
