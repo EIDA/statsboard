@@ -68,7 +68,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
           if (single) {
             network = result.node;
           } else {
-            network = result.network || "Unsuccessful<br>requests";
+            network = result.network || "N/A";
           }
           const clients = result.hll_clients;
           if (foundNets[network]) {
@@ -187,7 +187,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
           if (single) {
             network = result.node;
           } else {
-            network = result.network || "Unsuccessful<br>requests";
+            network = result.network || "N/A";
           }
           const index = accumulator.networks.indexOf(network);
           if (index !== -1) {
@@ -238,7 +238,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
           if (single) {
             network = result.node;
           } else {
-            network = result.network || "Unsuccessful<br>requests";
+            network = result.network || "N/A";
           }
           const index = accumulator.networks.indexOf(network);
           if (index !== -1) {
@@ -471,7 +471,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
               y3: aggregatedResults.map(result => result.y3),
               y4: aggregatedResults.map(result => result.y4),
               y5: aggregatedResults.map(result => result.y5),
-              name: single ? `${net} (${network})` : (network ? network : "Unsuccessful<br>requests"),
+              name: single ? `${net} (${network})` : (network ? network : "N/A"),
               type: 'bar'
             };
           });
@@ -779,7 +779,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                       reversescale: true
                     },
                     {
-                      title: 'Number of unique users per country',
+                      title: 'Number of total requests per country',
                     }
                   ],
                   label: 'Total Requests',
@@ -835,7 +835,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
           let networkCheckboxes = networksSorted.map((network, index) => (
             <div key={index}>
               <input type="checkbox" id={`network-${index}`} value={network} defaultChecked onChange={handleCheckboxClick} />
-              <label htmlFor={`network-${index}`}>{single ? `${net} (${network})` : (network ? network : "Unsuccessful requests")}</label>
+              <label htmlFor={`network-${index}`}>{single ? `${net} (${network})` : (network ? network : "N/A")}</label>
             </div>
           ));
           const networkCheckboxesContainer = document.getElementById('nns-checkboxes');

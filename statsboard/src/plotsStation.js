@@ -177,100 +177,26 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
         Plotly.newPlot('total-bytes', [pieDataBytes], pieLayoutBytes, {displaylogo: false});
 
         // requests plot
-        // group slices with less than 2% into one for total requests
-        const thresholdTot = data.results.reduce((total, result) => total + result.nb_reqs, 0) * 0.02;
-        const filteredResultsTot = data.results.filter(result => result.nb_reqs >= thresholdTot);
-        const sumFilteredTot = filteredResultsTot.reduce((sum, result) => sum + result.nb_reqs, 0);
-        const groupedSliceTot = {
+        // group slices with less than 2% into one
+        const thresholdReq = data.results.reduce((total, result) => total + result.nb_reqs, 0) * 0.02;
+        const filteredResultsReq = data.results.filter(result => result.nb_reqs >= thresholdReq);
+        const sumFilteredReq = filteredResultsReq.reduce((sum, result) => sum + result.nb_reqs, 0);
+        const groupedSliceReq = {
           station: 'Less than 2%',
-          nb_reqs: Math.round(thresholdTot / 0.02 - sumFilteredTot)
+          nb_reqs: Math.round(thresholdReq / 0.02 - sumFilteredReq)
         };
-        if (groupedSliceTot.nb_reqs > 0) {
-          filteredResultsTot.push(groupedSliceTot);
+        if (groupedSliceReq.nb_reqs > 0) {
+          filteredResultsReq.push(groupedSliceReq);
         }
-        // group slices with less than 2% into one for successful requests
-        const thresholdSucc = data.results.reduce((total, result) => total + result.nb_successful_reqs, 0) * 0.02;
-        const filteredResultsSucc = data.results.filter(result => result.nb_successful_reqs >= thresholdSucc);
-        const sumFilteredSucc = filteredResultsSucc.reduce((sum, result) => sum + result.nb_successful_reqs, 0);
-        const groupedSliceSucc = {
-          station: 'Less than 2%',
-          nb_successful_reqs: Math.round(thresholdSucc / 0.02 - sumFilteredSucc)
-        };
-        if (groupedSliceSucc.nb_successful_reqs > 0) {
-          filteredResultsSucc.push(groupedSliceSucc);
-        }
-        // group slices with less than 2% into one for unsuccessful requests
-        const thresholdUnsucc = data.results.reduce((total, result) => total + result.nb_reqs - result.nb_successful_reqs, 0) * 0.02;
-        const filteredResultsUnsucc = data.results.filter(result => result.nb_reqs - result.nb_successful_reqs >= thresholdUnsucc);
-        const sumFilteredUnsucc = filteredResultsUnsucc.reduce((sum, result) => sum + result.nb_reqs - result.nb_successful_reqs, 0);
-        const groupedSliceUnsucc = {
-          station: 'Less than 2%',
-          nb_unsuccessful_reqs: Math.round(thresholdUnsucc / 0.02 - sumFilteredUnsucc)
-        };
-        if (groupedSliceUnsucc.nb_unsuccessful_reqs > 0) {
-          filteredResultsUnsucc.push(groupedSliceUnsucc);
-        }
-        // show total requests at first
         const pieDataRequests = {
-          values: filteredResultsTot.map(result => result.nb_reqs),
-          labels: filteredResultsTot.map(result => result.station),
+          values: filteredResultsReq.map(result => result.nb_reqs),
+          labels: filteredResultsReq.map(result => result.station),
           type: 'pie',
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
           sort: false
         };
         const pieLayoutRequests = {
           title: 'Total number of requests',
-          updatemenus: [{
-            buttons: [
-              // total requests button
-              {
-                args: [
-                  {
-                    values: [filteredResultsTot.map(result => result.nb_reqs)],
-                    type: 'pie',
-                    sort: false
-                  },
-                  {
-                    title: 'Total number of requests',
-                  }
-                ],
-                label: 'Total Requests',
-                method: 'update'
-              },
-              // successful requests button
-              {
-                args: [
-                  {
-                    values: [filteredResultsSucc.map(result => result.nb_successful_reqs)],
-                    type: 'pie',
-                    sort: false
-                  },
-                  {
-                    title: 'Total number of successful requests',
-                  }
-                ],
-                label: 'Successful Requests',
-                method: 'update'
-              },
-              // unsuccessful requests button
-              {
-                args: [
-                  {
-                    values: [filteredResultsUnsucc.map(result => result.nb_unsuccessful_reqs ? result.nb_unsuccessful_reqs : result.nb_reqs - result.nb_successful_reqs)],
-                    type: 'pie',
-                    sort: false
-                  },
-                  {
-                    title: 'Total number of unsuccessful requests',
-                  }
-                ],
-                label: 'Unsuccessful Requests',
-                method: 'update'
-              }
-            ],
-            direction: 'down',
-            type: 'buttons'
-          }]
         };
         Plotly.newPlot('total-requests', [pieDataRequests], pieLayoutRequests, {displaylogo: false});
       })
@@ -334,8 +260,6 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                 y1: stationResults.map(result => result.clients),
                 y2: stationResults.map(result => result.bytes),
                 y3: stationResults.map(result => result.nb_reqs),
-                y4: stationResults.map(result => result.nb_successful_reqs),
-                y5: stationResults.map(result => result.nb_reqs - result.nb_successful_reqs),
                 name: station,
                 type: 'bar'
               }
@@ -447,7 +371,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                   label: 'Bytes',
                   method: 'update'
                 },
-                // total requests button
+                // requests button
                 {
                   args: [
                     {
@@ -457,59 +381,17 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                       type: 'bar'
                     },
                     {
-                      title: 'Number of total requests per '+details,
+                      title: 'Number of requests per '+details,
                       yaxis: {
-                        title: 'Total Requests'
+                        title: 'Requests'
                       },
                       showlegend: true,
                       annotations: []
                     }
                   ],
-                  label: 'Total Requests',
+                  label: 'Requests',
                   method: 'update'
                 },
-                // successful requests button
-                {
-                  args: [
-                    {
-                      x: barData.map(bar => bar.x),
-                      y: barData.map(bar => bar.y4),
-                      name: barData.map(bar => bar.name),
-                      type: 'bar'
-                    },
-                    {
-                      title: 'Number of successful requests per '+details,
-                      yaxis: {
-                        title: 'Successful Requests'
-                      },
-                      showlegend: true,
-                      annotations: []
-                    }
-                  ],
-                  label: 'Successful Requests',
-                  method: 'update'
-                },
-                // unsuccessful requests button
-                {
-                  args: [
-                    {
-                      x: barData.map(bar => bar.x),
-                      y: barData.map(bar => bar.y5),
-                      name: barData.map(bar => bar.name),
-                      type: 'bar'
-                    },
-                    {
-                      title: 'Number of unsuccessful requests per '+details,
-                      yaxis: {
-                        title: 'Unsuccessful Requests'
-                      },
-                      showlegend: true,
-                      annotations: []
-                    }
-                  ],
-                  label: 'Unsuccessful Requests',
-                  method: 'update'
-                }
               ],
               direction: 'down',
               type: 'buttons'
@@ -555,14 +437,12 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                 country: result.country,
                 clients: new HLL(11, 5),
                 bytes: 0,
-                nb_reqs: 0,
-                nb_successful_reqs: 0,
+                nb_reqs: 0
               };
             }
             aggregate[result.country].clients.union(fromHexString(result.hll_clients).hllSet);
             aggregate[result.country].bytes += result.bytes;
             aggregate[result.country].nb_reqs += result.nb_reqs;
-            aggregate[result.country].nb_successful_reqs += result.nb_successful_reqs;
             return aggregate;
           }, {});
           for (const country in aggregatedResults) {
@@ -628,7 +508,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                   label: 'Bytes',
                   method: 'update'
                 },
-                // total requests button
+                // requests button
                 {
                   args: [
                     {
@@ -639,46 +519,12 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                       reversescale: true
                     },
                     {
-                      title: 'Number of unique users per country',
+                      title: 'Number of requests per country',
                     }
                   ],
-                  label: 'Total Requests',
+                  label: 'Requests',
                   method: 'update'
                 },
-                // successful requests button
-                {
-                  args: [
-                    {
-                      z: [Object.values(aggregatedResults).map(result => result.nb_successful_reqs)],
-                      type: 'choroplethmapbox',
-                      colorscale: 'Viridis',
-                      autocolorscale: false,
-                      reversescale: true
-                    },
-                    {
-                      title: 'Number of successful requests per country',
-                    }
-                  ],
-                  label: 'Successful Requests',
-                  method: 'update'
-                },
-                // unsuccessful requests button
-                {
-                  args: [
-                    {
-                      z: [Object.values(aggregatedResults).map(result => result.nb_reqs - result.nb_successful_reqs)],
-                      type: 'choroplethmapbox',
-                      colorscale: 'Viridis',
-                      autocolorscale: false,
-                      reversescale: true
-                    },
-                    {
-                      title: 'Number of unsuccessful requests per country',
-                    }
-                  ],
-                  label: 'Unsuccessful Requests',
-                  method: 'update'
-                }
               ],
               direction: 'down',
               type: 'buttons'
@@ -734,14 +580,12 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                   country: result.country,
                   clients: new HLL(11, 5),
                   bytes: 0,
-                  nb_reqs: 0,
-                  nb_successful_reqs: 0,
+                  nb_reqs: 0
                 };
               }
               aggregate[result.country].clients.union(fromHexString(result.hll_clients).hllSet);
               aggregate[result.country].bytes += result.bytes;
               aggregate[result.country].nb_reqs += result.nb_reqs;
-              aggregate[result.country].nb_successful_reqs += result.nb_successful_reqs;
               return aggregate;
             }, {});
             for (const country in aggregatedResults) {
@@ -756,10 +600,6 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                 return result.bytes;
               } else if (activeButtonIndex === 2) {
                 return result.nb_reqs;
-              } else if (activeButtonIndex === 3) {
-                return result.nb_successful_reqs;
-              } else if (activeButtonIndex === 4) {
-                return result.nb_reqs - result.nb_successful_reqs;
               }
             });
             const newMapData = [{
@@ -780,10 +620,6 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                 button.args[0].z = [Object.values(aggregatedResults).map(result => result.bytes)]
               } else if (button && index === 2) {
                 button.args[0].z = [Object.values(aggregatedResults).map(result => result.nb_reqs)]
-              } else if (button && index === 3) {
-                button.args[0].z = [Object.values(aggregatedResults).map(result => result.nb_successful_reqs)]
-              } else if (button && index === 4) {
-                button.args[0].z = [Object.values(aggregatedResults).map(result => result.nb_reqs - result.nb_successful_reqs)]
               }
             });
             Plotly.react('country-plots', newMapData, mapLayout);

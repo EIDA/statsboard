@@ -628,7 +628,7 @@ export function makePlotsNode(startTime, endTime, node) {
                           reversescale: true
                         },
                         {
-                          title: 'Number of unique users per country',
+                          title: 'Number of total requests per country',
                         }
                       ],
                       label: 'Total Requests',

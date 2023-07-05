@@ -89,8 +89,8 @@ function App() {
           let file = new FormData();
           file.append('file', authTokenFile);
           // if multiple networks asked
-          if ((isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork)).includes(',')
-                || (isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork)) === "") {
+          const strNets = isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork);
+          if (!strNets || strNets.includes(',') || strNets === "") {
             makePlotsNetwork(isAuthenticated, file, startTime, endTime, paramToPass(node, inputNode),
               isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork));
           }
