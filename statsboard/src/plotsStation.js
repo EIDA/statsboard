@@ -45,8 +45,8 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
       .then((data) => {
         // sort results alphabetically by station
         data.results.sort((a, b) => {
-          const stationA = a.station;
-          const stationB = b.station;
+          const stationA = a.network + '.' + a.station;
+          const stationB = b.network + '.' + b.station;
           if (stationA < stationB) {
             return -1;
           }
@@ -60,24 +60,32 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
         data.results.forEach((result) => {
           hll.union(fromHexString(result.hll_clients).hllSet);
         });
+
+        // clients plot, per station pie at first
         // group slices with less than 2% into one
         const thresholdClients = data.results.reduce((total, result) => total + result.clients, 0) * 0.02;
         const filteredResultsClients = data.results.filter(result => result.clients >= thresholdClients);
         const sumFilteredClients = filteredResultsClients.reduce((sum, result) => sum + result.clients, 0);
         const groupedSliceClients = {
           station: 'Less than 2%',
-          clients: Math.round(thresholdClients / 0.02 - sumFilteredClients)
+          clients: Math.round(thresholdClients / 0.02 - sumFilteredClients),
+          belongsHere: []
         };
         if (groupedSliceClients.clients > 0) {
+          data.results.forEach(result => {
+            if (result.clients < thresholdClients) {
+              groupedSliceClients.belongsHere.push(result.network + '.' + result.station);
+            }
+          });
           filteredResultsClients.push(groupedSliceClients);
         }
-        // clients plot, per station pie at first
         const pieDataClients = {
           values: filteredResultsClients.map(result => result.clients),
-          labels: filteredResultsClients.map(result => result.station),
+          labels: filteredResultsClients.map(result => result.network ? result.network + '.' + result.station : result.station),
           type: 'pie',
           texttemplate: '%{value:.3s}',
-          hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
+          hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra>%{customdata}</extra>',
+          customdata: filteredResultsClients.map(result => result.station === 'Less than 2%' ? result.belongsHere.join('<br>') : ''),
           sort: false
         };
         const pieLayoutClients = {
@@ -160,17 +168,24 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
         const sumFilteredBytes = filteredResultsBytes.reduce((sum, result) => sum + result.bytes, 0);
         const groupedSliceBytes = {
           station: 'Less than 3%',
-          bytes: Math.round(thresholdBytes / 0.03 - sumFilteredBytes)
+          bytes: Math.round(thresholdBytes / 0.03 - sumFilteredBytes),
+          belongsHere: []
         };
         if (groupedSliceBytes.bytes > 0) {
+          data.results.forEach(result => {
+            if (result.bytes < thresholdBytes) {
+              groupedSliceBytes.belongsHere.push(result.network + '.' + result.station);
+            }
+          });
           filteredResultsBytes.push(groupedSliceBytes);
         }
         const pieDataBytes = {
           values: filteredResultsBytes.map(result => result.bytes),
-          labels: filteredResultsBytes.map(result => result.station),
+          labels: filteredResultsBytes.map(result => result.network ? result.network + '.' + result.station : result.station),
           type: 'pie',
           texttemplate: '%{value:.3s}',
-          hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
+          hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra>%{customdata}</extra>',
+          customdata: filteredResultsBytes.map(result => result.station === 'Less than 3%' ? result.belongsHere.join('<br>') : ''),
           sort: false
         };
         const pieLayoutBytes = {
@@ -185,17 +200,24 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
         const sumFilteredReq = filteredResultsReq.reduce((sum, result) => sum + result.nb_reqs, 0);
         const groupedSliceReq = {
           station: 'Less than 2%',
-          nb_reqs: Math.round(thresholdReq / 0.02 - sumFilteredReq)
+          nb_reqs: Math.round(thresholdReq / 0.02 - sumFilteredReq),
+          belongsHere: []
         };
         if (groupedSliceReq.nb_reqs > 0) {
+          data.results.forEach(result => {
+            if (result.nb_reqs < thresholdReq) {
+              groupedSliceReq.belongsHere.push(result.network + '.' + result.station);
+            }
+          });
           filteredResultsReq.push(groupedSliceReq);
         }
         const pieDataRequests = {
           values: filteredResultsReq.map(result => result.nb_reqs),
-          labels: filteredResultsReq.map(result => result.station),
+          labels: filteredResultsReq.map(result => result.network ? result.network + '.' + result.station : result.station),
           type: 'pie',
           texttemplate: '%{value:.3s}',
-          hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
+          hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra>%{customdata}</extra>',
+          customdata: filteredResultsReq.map(result => result.station === 'Less than 2%' ? result.belongsHere.join('<br>') : ''),
           sort: false
         };
         const pieLayoutRequests = {
@@ -240,7 +262,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
           }
         })
         .then((data) => {
-          const stationsSorted = Array.from(new Set(data.results.map(result => result.station))).sort((a, b) => a.localeCompare(b)).reverse();
+          const stationsSorted = Array.from(new Set(data.results.map(result => result.network + '.' + result.station))).sort((a, b) => a.localeCompare(b)).reverse();
           // calculate hll values for total clients all stations bar plot
           let hlls = {};
           data.results.forEach(result => {
@@ -257,7 +279,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
           clientsAllStations[stationsSorted.length - 1] = Object.values(hlls).map(hll => hll.cardinality());
           // show clients at first
           const barData = stationsSorted.map(station => {
-              const stationResults = data.results.filter(result => result.station === station);
+              const stationResults = data.results.filter(result => result.network + '.' + result.station === station);
               return {
                 x: stationResults.map(result => result.date),
                 y1: stationResults.map(result => result.clients),
@@ -534,8 +556,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
             }]
           };
           Plotly.newPlot('country-plots', mapData, mapLayout, {displaylogo: false});
-
-          const stationsSorted = Array.from(new Set(data.results.map(result => result.station))).sort((a, b) => a.localeCompare(b));
+          const stationsSorted = Array.from(new Set(data.results.map(result => result.network ? result.network + '.' + result.station : result.station))).sort((a, b) => a.localeCompare(b));
           let stationCheckboxes = stationsSorted.map((station, index) => (
             <div key={index}>
               <input type="checkbox" id={`station-${index}`} value={station} defaultChecked onChange={handleCheckboxClick} />

@@ -80,7 +80,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
         });
         // group slices with less than 3% into one
         const thresholdClients = Object.values(foundNets).reduce((total, value) => total + value.cardinality(), 0) * 0.03;
-        let groupedDataClients = {values: [], labels: []};
+        let groupedDataClients = {values: [], labels: [], belongsInLess: []};
         Object.entries(foundNets).forEach(([network, value]) => {
           if (value.cardinality() >= thresholdClients) {
             groupedDataClients.values.push(value);
@@ -90,6 +90,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
               groupedDataClients.labels.push(network);
             }
           } else {
+            groupedDataClients.belongsInLess.push(network);
             if (!groupedDataClients.labels.includes('Less than 3%')) {
               groupedDataClients.values.push(value);
               groupedDataClients.labels.push('Less than 3%');
@@ -105,7 +106,8 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
           labels: groupedDataClients.labels,
           type: 'pie',
           texttemplate: '%{value:.3s}',
-          hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
+          hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra>%{customdata}</extra>',
+          customdata: groupedDataClients.labels.map(label => label === 'Less than 3%' ? groupedDataClients.belongsInLess.join('<br>') : ''),
           sort: false
         };
         const pieLayoutClients = {
@@ -210,6 +212,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
             accumulator.values.push(sharedBytes.bytes[index]);
             accumulator.labels.push(network);
           } else {
+            accumulator.belongsInLess.push(network);
             if (!accumulator.labels.includes('Less than 3%')) {
               accumulator.values.push(sharedBytes.bytes[index]);
               accumulator.labels.push('Less than 3%');
@@ -219,13 +222,14 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
             }
           }
           return accumulator;
-        }, { values: [], labels: [] });
+        }, { values: [], labels: [], belongsInLess: [] });
         const pieDataBytes = {
           values: groupedDataBytes.values,
           labels: groupedDataBytes.labels,
           type: 'pie',
           texttemplate: '%{value:.3s}',
-          hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
+          hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra>%{customdata}</extra>',
+          customdata: groupedDataBytes.labels.map(label => label === 'Less than 3%' ? groupedDataBytes.belongsInLess.join('<br>') : ''),
           sort: false
         };
         const pieLayoutBytes = {
@@ -264,6 +268,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
             accumulator.values.push(sharedReq.nb_reqs[index]);
             accumulator.labels.push(network);
           } else {
+            accumulator.belongsInLess.push(network);
             if (!accumulator.labels.includes('Less than 3%')) {
               accumulator.values.push(sharedReq.nb_reqs[index]);
               accumulator.labels.push('Less than 3%');
@@ -273,7 +278,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
             }
           }
           return accumulator;
-        }, { values: [], labels: [] });
+        }, { values: [], labels: [], belongsInLess: [] });
         // group slices with less than 3% into one for successful requests
         const thresholdSucc = data.results.reduce((total, result) => total + result.nb_successful_reqs, 0) * 0.03;
         const groupedDataSucc = sharedReq.networks.reduce((accumulator, network, index) => {
@@ -281,6 +286,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
             accumulator.values.push(sharedReq.nb_successful_reqs[index]);
             accumulator.labels.push(network);
           } else {
+            accumulator.belongsInLess.push(network);
             if (!accumulator.labels.includes('Less than 3%')) {
               accumulator.values.push(sharedReq.nb_successful_reqs[index]);
               accumulator.labels.push('Less than 3%');
@@ -290,7 +296,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
             }
           }
           return accumulator;
-        }, { values: [], labels: [] });
+        }, { values: [], labels: [], belongsInLess: [] });
         // group slices with less than 3% into one for unsuccessful requests
         const thresholdUnsucc = data.results.reduce((total, result) => total + result.nb_reqs - result.nb_successful_reqs, 0) * 0.03;
         const groupedDataUnsucc = sharedReq.networks.reduce((accumulator, network, index) => {
@@ -298,6 +304,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
             accumulator.values.push(sharedReq.nb_reqs[index] - sharedReq.nb_successful_reqs[index]);
             accumulator.labels.push(network);
           } else {
+            accumulator.belongsInLess.push(network);
             if (!accumulator.labels.includes('Less than 3%')) {
               accumulator.values.push(sharedReq.nb_reqs[index] - sharedReq.nb_successful_reqs[index]);
               accumulator.labels.push('Less than 3%');
@@ -308,7 +315,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
           }
           return accumulator;
         },
-          { values: [], labels: [] }
+          { values: [], labels: [], belongsInLess: [] }
         );
         // show total requests at first
         const pieDataRequests = {
@@ -316,7 +323,8 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
           labels: groupedDataTot.labels,
           type: 'pie',
           texttemplate: '%{value:.3s}',
-          hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
+          hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra>%{customdata}</extra>',
+          customdata: groupedDataTot.labels.map(label => label === 'Less than 3%' ? groupedDataTot.belongsInLess.join('<br>') : ''),
           sort: false
         };
         const pieLayoutRequests = {
@@ -329,6 +337,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                   {
                     values: [groupedDataTot.values],
                     labels: [groupedDataTot.labels],
+                    customdata: groupedDataTot.labels.map(label => label === 'Less than 3%' ? groupedDataTot.belongsInLess.join('<br>') : ''),
                     type: 'pie',
                     sort: false
                   },
@@ -345,6 +354,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                   {
                     values: [groupedDataSucc.values],
                     labels: [groupedDataSucc.labels],
+                    customdata: groupedDataSucc.labels.map(label => label === 'Less than 3%' ? groupedDataSucc.belongsInLess.join('<br>') : ''),
                     type: 'pie',
                     sort: false
                   },
@@ -361,6 +371,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                   {
                     values: [groupedDataUnsucc.values],
                     labels: [groupedDataUnsucc.labels],
+                    customdata: groupedDataUnsucc.labels.map(label => label === 'Less than 3%' ? groupedDataUnsucc.belongsInLess.join('<br>') : ''),
                     type: 'pie',
                     sort: false
                   },
