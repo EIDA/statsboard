@@ -89,6 +89,7 @@ export function makePlotsNode(startTime, endTime, node) {
               marker: {
                 colors: Object.values(nodesColors)
               },
+              texttemplate: '%{value:.3s}',
               hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
               sort: false
             };
@@ -173,6 +174,7 @@ export function makePlotsNode(startTime, endTime, node) {
               marker: {
                 colors: Object.values(nodesColors)
               },
+              texttemplate: '%{value:.3s}',
               hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
               sort: false
             };
@@ -190,6 +192,7 @@ export function makePlotsNode(startTime, endTime, node) {
               marker: {
                 colors: Object.values(nodesColors)
               },
+              texttemplate: '%{value:.3s}',
               hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
               sort: false
             };
@@ -307,7 +310,7 @@ export function makePlotsNode(startTime, endTime, node) {
               });
               clientsAllNodes[clientsAllNodes.length - 1] = Object.values(hlls).map(hll => hll.cardinality());
               // show clients at first
-              const barData = Object.keys(nodesColors).reverse().map((node, index) => {
+              const barData = Object.keys(nodesColors).map((node, index) => {
                   const nodeResults = data.results.filter(result => result.node === node);
                   return {
                     x: nodeResults.map(result => result.date),
@@ -317,7 +320,8 @@ export function makePlotsNode(startTime, endTime, node) {
                     y4: nodeResults.map(result => result.nb_successful_reqs),
                     y5: nodeResults.map(result => result.nb_reqs - result.nb_successful_reqs),
                     name: node,
-                    type: 'bar',
+                    type: 'scatter',
+                    hovertemplate: '(%{x}, %{y:.3s})',
                     marker: {
                       color: nodesColors[node]
                     }
@@ -338,20 +342,6 @@ export function makePlotsNode(startTime, endTime, node) {
                   title: 'Unique users*'
                 },
                 showlegend: true,
-                annotations: [
-                  {
-                    y: -0.32,
-                    xref: 'paper',
-                    yref: 'paper',
-                    text: '*<i>Important note: The number of unique users is correct for each node. However, the total number of unique users for all selected nodes,<br> i.e. the height of the bars, does not represent the real value, as many clients may have asked data from multiple nodes.<\i>',
-                    showarrow: false,
-                    font: {
-                      family: 'Arial',
-                      size: 12,
-                      color: 'black'
-                    }
-                  }
-                ],
                 updatemenus: [{
                   buttons: [
                     // clients per node button
@@ -361,7 +351,9 @@ export function makePlotsNode(startTime, endTime, node) {
                           x: barData.map(bar => bar.x),
                           y: barData.map(bar => bar.y1),
                           name: barData.map(bar => bar.name),
-                          type: 'bar'
+                          type: 'scatter',
+                          hovertemplate: '(%{x}, %{y:.3s})',
+                          marker: Object.values(nodesColors).map(color => ({ color: color }))
                         },
                         {
                           title: 'Number of users* per '+details,
@@ -369,20 +361,6 @@ export function makePlotsNode(startTime, endTime, node) {
                             title: 'Unique users*'
                           },
                           showlegend: true,
-                          annotations: [
-                            {
-                              y: -0.32,
-                              xref: 'paper',
-                              yref: 'paper',
-                              text: '*<i>Important note: The number of unique users is correct for each node. However, the total number of unique users for all selected nodes,<br> i.e. the height of the bars, does not represent the real value, as many clients may have asked data from multiple nodes.<\i>',
-                              showarrow: false,
-                              font: {
-                                family: 'Arial',
-                                size: 12,
-                                color: 'black'
-                              }
-                            }
-                          ]
                         }
                       ],
                       label: 'Users Per Node',
@@ -395,7 +373,9 @@ export function makePlotsNode(startTime, endTime, node) {
                           x: [Object.keys(hlls)],
                           y: clientsAllNodes,
                           name: Array(Object.keys(nodesColors).length).fill(""),
-                          type: 'bar'
+                          type: 'bar',
+                          hovertemplate: '(%{x}, %{value:.3s})',
+                          marker: { color: Object.values(nodesColors)[0] }
                         },
                         {
                           title: 'Number of unique users of all specified nodes per '+details,
@@ -413,10 +393,12 @@ export function makePlotsNode(startTime, endTime, node) {
                     {
                       args: [
                         {
-                          x: barData.map(bar => bar.x),
-                          y: barData.map(bar => bar.y2),
-                          name: barData.map(bar => bar.name),
-                          type: 'bar'
+                          x: barData.map(bar => bar.x).reverse(),
+                          y: barData.map(bar => bar.y2).reverse(),
+                          name: barData.map(bar => bar.name).reverse(),
+                          type: 'bar',
+                          hovertemplate: '(%{x}, %{value:.3s})',
+                          marker: Object.values(nodesColors).reverse().map(color => ({ color: color }))
                         },
                         {
                           title: 'Number of bytes per '+details,
@@ -434,10 +416,12 @@ export function makePlotsNode(startTime, endTime, node) {
                     {
                       args: [
                         {
-                          x: barData.map(bar => bar.x),
-                          y: barData.map(bar => bar.y3),
-                          name: barData.map(bar => bar.name),
-                          type: 'bar'
+                          x: barData.map(bar => bar.x).reverse(),
+                          y: barData.map(bar => bar.y3).reverse(),
+                          name: barData.map(bar => bar.name).reverse(),
+                          type: 'bar',
+                          hovertemplate: '(%{x}, %{value:.3s})',
+                          marker: Object.values(nodesColors).reverse().map(color => ({ color: color }))
                         },
                         {
                           title: 'Number of total requests per '+details,
@@ -455,10 +439,12 @@ export function makePlotsNode(startTime, endTime, node) {
                     {
                       args: [
                         {
-                          x: barData.map(bar => bar.x),
-                          y: barData.map(bar => bar.y4),
-                          name: barData.map(bar => bar.name),
-                          type: 'bar'
+                          x: barData.map(bar => bar.x).reverse(),
+                          y: barData.map(bar => bar.y4).reverse(),
+                          name: barData.map(bar => bar.name).reverse(),
+                          type: 'bar',
+                          hovertemplate: '(%{x}, %{value:.3s})',
+                          marker: Object.values(nodesColors).reverse().map(color => ({ color: color }))
                         },
                         {
                           title: 'Number of successful requests per '+details,
@@ -476,10 +462,12 @@ export function makePlotsNode(startTime, endTime, node) {
                     {
                       args: [
                         {
-                          x: barData.map(bar => bar.x),
-                          y: barData.map(bar => bar.y5),
-                          name: barData.map(bar => bar.name),
-                          type: 'bar'
+                          x: barData.map(bar => bar.x).reverse(),
+                          y: barData.map(bar => bar.y5).reverse(),
+                          name: barData.map(bar => bar.name).reverse(),
+                          type: 'bar',
+                          hovertemplate: '(%{x}, %{value:.3s})',
+                          marker: Object.values(nodesColors).reverse().map(color => ({ color: color }))
                         },
                         {
                           title: 'Number of unsuccessful requests per '+details,
@@ -504,7 +492,7 @@ export function makePlotsNode(startTime, endTime, node) {
               else if (details === "month") {
                 barLayout.xaxis["dtick"] = "M1";
               }
-              Plotly.newPlot(details+'-plots', barData.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: 'bar', marker: bar.marker, hovertemplate: '(%{x}, %{value:.3s})'})), barLayout, {displaylogo: false});
+              Plotly.newPlot(details+'-plots', barData.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: bar.type, marker: bar.marker, hovertemplate: bar.hovertemplate})), barLayout, {displaylogo: false});
             })
             .catch((error) => console.log(error));
         }
@@ -628,7 +616,7 @@ export function makePlotsNode(startTime, endTime, node) {
                           reversescale: true
                         },
                         {
-                          title: 'Number of unique users per country',
+                          title: 'Number of total requests per country',
                         }
                       ],
                       label: 'Total Requests',

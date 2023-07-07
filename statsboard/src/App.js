@@ -89,8 +89,8 @@ function App() {
           let file = new FormData();
           file.append('file', authTokenFile);
           // if multiple networks asked
-          if ((isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork)).includes(',')
-                || (isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork)) === "") {
+          const strNets = isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork);
+          if (!strNets || strNets.includes(',') || strNets === "") {
             makePlotsNetwork(isAuthenticated, file, startTime, endTime, paramToPass(node, inputNode),
               isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork));
           }
@@ -222,7 +222,7 @@ function App() {
               setLevel("eida"); setNode([]); setInputNode(""); setNetwork([]); setInputNetwork(""); setStation("");}}/>} label="Authentication" />
             {isAuthenticated && (
               <div>
-                <label>Upload token file: </label>
+                <label>Select token file: </label>
                 <input type="file" onChange={(event) => setAuthTokenFile(event.target.files[0])} />
                 <div className="upload-note">
                   To redeem an EIDA authentication token file visit <a href="https://geofon.gfz-potsdam.de/eas/">https://geofon.gfz-potsdam.de/eas</a>.

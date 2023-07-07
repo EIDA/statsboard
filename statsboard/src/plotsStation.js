@@ -45,8 +45,8 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
       .then((data) => {
         // sort results alphabetically by station
         data.results.sort((a, b) => {
-          const stationA = a.station;
-          const stationB = b.station;
+          const stationA = a.network + '.' + a.station;
+          const stationB = b.network + '.' + b.station;
           if (stationA < stationB) {
             return -1;
           }
@@ -60,23 +60,32 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
         data.results.forEach((result) => {
           hll.union(fromHexString(result.hll_clients).hllSet);
         });
+
+        // clients plot, per station pie at first
         // group slices with less than 2% into one
         const thresholdClients = data.results.reduce((total, result) => total + result.clients, 0) * 0.02;
         const filteredResultsClients = data.results.filter(result => result.clients >= thresholdClients);
         const sumFilteredClients = filteredResultsClients.reduce((sum, result) => sum + result.clients, 0);
         const groupedSliceClients = {
           station: 'Less than 2%',
-          clients: Math.round(thresholdClients / 0.02 - sumFilteredClients)
+          clients: Math.round(thresholdClients / 0.02 - sumFilteredClients),
+          belongsHere: []
         };
         if (groupedSliceClients.clients > 0) {
+          data.results.forEach(result => {
+            if (result.clients < thresholdClients) {
+              groupedSliceClients.belongsHere.push(result.network + '.' + result.station);
+            }
+          });
           filteredResultsClients.push(groupedSliceClients);
         }
-        // clients plot, per station pie at first
         const pieDataClients = {
           values: filteredResultsClients.map(result => result.clients),
-          labels: filteredResultsClients.map(result => result.station),
+          labels: filteredResultsClients.map(result => result.network ? result.network + '.' + result.station : result.station),
           type: 'pie',
-          hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
+          texttemplate: '%{value:.3s}',
+          hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra>%{customdata}</extra>',
+          customdata: filteredResultsClients.map(result => result.station === 'Less than 2%' ? result.belongsHere.join('<br>') : ''),
           sort: false
         };
         const pieLayoutClients = {
@@ -159,16 +168,24 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
         const sumFilteredBytes = filteredResultsBytes.reduce((sum, result) => sum + result.bytes, 0);
         const groupedSliceBytes = {
           station: 'Less than 3%',
-          bytes: Math.round(thresholdBytes / 0.03 - sumFilteredBytes)
+          bytes: Math.round(thresholdBytes / 0.03 - sumFilteredBytes),
+          belongsHere: []
         };
         if (groupedSliceBytes.bytes > 0) {
+          data.results.forEach(result => {
+            if (result.bytes < thresholdBytes) {
+              groupedSliceBytes.belongsHere.push(result.network + '.' + result.station);
+            }
+          });
           filteredResultsBytes.push(groupedSliceBytes);
         }
         const pieDataBytes = {
           values: filteredResultsBytes.map(result => result.bytes),
-          labels: filteredResultsBytes.map(result => result.station),
+          labels: filteredResultsBytes.map(result => result.network ? result.network + '.' + result.station : result.station),
           type: 'pie',
-          hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
+          texttemplate: '%{value:.3s}',
+          hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra>%{customdata}</extra>',
+          customdata: filteredResultsBytes.map(result => result.station === 'Less than 3%' ? result.belongsHere.join('<br>') : ''),
           sort: false
         };
         const pieLayoutBytes = {
@@ -177,100 +194,34 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
         Plotly.newPlot('total-bytes', [pieDataBytes], pieLayoutBytes, {displaylogo: false});
 
         // requests plot
-        // group slices with less than 2% into one for total requests
-        const thresholdTot = data.results.reduce((total, result) => total + result.nb_reqs, 0) * 0.02;
-        const filteredResultsTot = data.results.filter(result => result.nb_reqs >= thresholdTot);
-        const sumFilteredTot = filteredResultsTot.reduce((sum, result) => sum + result.nb_reqs, 0);
-        const groupedSliceTot = {
+        // group slices with less than 2% into one
+        const thresholdReq = data.results.reduce((total, result) => total + result.nb_reqs, 0) * 0.02;
+        const filteredResultsReq = data.results.filter(result => result.nb_reqs >= thresholdReq);
+        const sumFilteredReq = filteredResultsReq.reduce((sum, result) => sum + result.nb_reqs, 0);
+        const groupedSliceReq = {
           station: 'Less than 2%',
-          nb_reqs: Math.round(thresholdTot / 0.02 - sumFilteredTot)
+          nb_reqs: Math.round(thresholdReq / 0.02 - sumFilteredReq),
+          belongsHere: []
         };
-        if (groupedSliceTot.nb_reqs > 0) {
-          filteredResultsTot.push(groupedSliceTot);
+        if (groupedSliceReq.nb_reqs > 0) {
+          data.results.forEach(result => {
+            if (result.nb_reqs < thresholdReq) {
+              groupedSliceReq.belongsHere.push(result.network + '.' + result.station);
+            }
+          });
+          filteredResultsReq.push(groupedSliceReq);
         }
-        // group slices with less than 2% into one for successful requests
-        const thresholdSucc = data.results.reduce((total, result) => total + result.nb_successful_reqs, 0) * 0.02;
-        const filteredResultsSucc = data.results.filter(result => result.nb_successful_reqs >= thresholdSucc);
-        const sumFilteredSucc = filteredResultsSucc.reduce((sum, result) => sum + result.nb_successful_reqs, 0);
-        const groupedSliceSucc = {
-          station: 'Less than 2%',
-          nb_successful_reqs: Math.round(thresholdSucc / 0.02 - sumFilteredSucc)
-        };
-        if (groupedSliceSucc.nb_successful_reqs > 0) {
-          filteredResultsSucc.push(groupedSliceSucc);
-        }
-        // group slices with less than 2% into one for unsuccessful requests
-        const thresholdUnsucc = data.results.reduce((total, result) => total + result.nb_reqs - result.nb_successful_reqs, 0) * 0.02;
-        const filteredResultsUnsucc = data.results.filter(result => result.nb_reqs - result.nb_successful_reqs >= thresholdUnsucc);
-        const sumFilteredUnsucc = filteredResultsUnsucc.reduce((sum, result) => sum + result.nb_reqs - result.nb_successful_reqs, 0);
-        const groupedSliceUnsucc = {
-          station: 'Less than 2%',
-          nb_unsuccessful_reqs: Math.round(thresholdUnsucc / 0.02 - sumFilteredUnsucc)
-        };
-        if (groupedSliceUnsucc.nb_unsuccessful_reqs > 0) {
-          filteredResultsUnsucc.push(groupedSliceUnsucc);
-        }
-        // show total requests at first
         const pieDataRequests = {
-          values: filteredResultsTot.map(result => result.nb_reqs),
-          labels: filteredResultsTot.map(result => result.station),
+          values: filteredResultsReq.map(result => result.nb_reqs),
+          labels: filteredResultsReq.map(result => result.network ? result.network + '.' + result.station : result.station),
           type: 'pie',
-          hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra></extra>',
+          texttemplate: '%{value:.3s}',
+          hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra>%{customdata}</extra>',
+          customdata: filteredResultsReq.map(result => result.station === 'Less than 2%' ? result.belongsHere.join('<br>') : ''),
           sort: false
         };
         const pieLayoutRequests = {
           title: 'Total number of requests',
-          updatemenus: [{
-            buttons: [
-              // total requests button
-              {
-                args: [
-                  {
-                    values: [filteredResultsTot.map(result => result.nb_reqs)],
-                    type: 'pie',
-                    sort: false
-                  },
-                  {
-                    title: 'Total number of requests',
-                  }
-                ],
-                label: 'Total Requests',
-                method: 'update'
-              },
-              // successful requests button
-              {
-                args: [
-                  {
-                    values: [filteredResultsSucc.map(result => result.nb_successful_reqs)],
-                    type: 'pie',
-                    sort: false
-                  },
-                  {
-                    title: 'Total number of successful requests',
-                  }
-                ],
-                label: 'Successful Requests',
-                method: 'update'
-              },
-              // unsuccessful requests button
-              {
-                args: [
-                  {
-                    values: [filteredResultsUnsucc.map(result => result.nb_unsuccessful_reqs ? result.nb_unsuccessful_reqs : result.nb_reqs - result.nb_successful_reqs)],
-                    type: 'pie',
-                    sort: false
-                  },
-                  {
-                    title: 'Total number of unsuccessful requests',
-                  }
-                ],
-                label: 'Unsuccessful Requests',
-                method: 'update'
-              }
-            ],
-            direction: 'down',
-            type: 'buttons'
-          }]
         };
         Plotly.newPlot('total-requests', [pieDataRequests], pieLayoutRequests, {displaylogo: false});
       })
@@ -311,7 +262,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
           }
         })
         .then((data) => {
-          const stationsSorted = Array.from(new Set(data.results.map(result => result.station))).sort((a, b) => a.localeCompare(b)).reverse();
+          const stationsSorted = Array.from(new Set(data.results.map(result => result.network + '.' + result.station))).sort((a, b) => a.localeCompare(b));
           // calculate hll values for total clients all stations bar plot
           let hlls = {};
           data.results.forEach(result => {
@@ -328,16 +279,15 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
           clientsAllStations[stationsSorted.length - 1] = Object.values(hlls).map(hll => hll.cardinality());
           // show clients at first
           const barData = stationsSorted.map(station => {
-              const stationResults = data.results.filter(result => result.station === station);
+              const stationResults = data.results.filter(result => result.network + '.' + result.station === station);
               return {
                 x: stationResults.map(result => result.date),
                 y1: stationResults.map(result => result.clients),
                 y2: stationResults.map(result => result.bytes),
                 y3: stationResults.map(result => result.nb_reqs),
-                y4: stationResults.map(result => result.nb_successful_reqs),
-                y5: stationResults.map(result => result.nb_reqs - result.nb_successful_reqs),
                 name: station,
-                type: 'bar'
+                type: 'scatter',
+                hovertemplate: '(%{x}, %{y:.3s})',
               }
           });
           let barLayout = {
@@ -355,20 +305,6 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
               title: 'Unique users*'
             },
             showlegend: true,
-            annotations: [
-              {
-                y: -0.32,
-                xref: 'paper',
-                yref: 'paper',
-                text: '*<i>Important note: The number of unique users is correct for each station. However, the total number of unique users for all selected stations,<br> i.e. the height of the bars, does not represent the real value, as many clients may have asked data from multiple stations.<\i>',
-                showarrow: false,
-                font: {
-                  family: 'Arial',
-                  size: 12,
-                  color: 'black'
-                }
-              }
-            ],
             updatemenus: [{
               buttons: [
                 // clients per station button
@@ -378,7 +314,8 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                       x: barData.map(bar => bar.x),
                       y: barData.map(bar => bar.y1),
                       name: barData.map(bar => bar.name),
-                      type: 'bar'
+                      type: 'scatter',
+                      hovertemplate: '(%{x}, %{y:.3s})',
                     },
                     {
                       title: 'Number of unique users* per '+details,
@@ -386,20 +323,6 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                         title: 'Unique users*'
                       },
                       showlegend: true,
-                      annotations: [
-                        {
-                          y: -0.32,
-                          xref: 'paper',
-                          yref: 'paper',
-                          text: '*<i>Important note: The number of unique users is correct for each station. However, the total number of unique users for all selected stations,<br> i.e. the height of the bars, does not represent the real value, as many clients may have asked data from multiple stations.<\i>',
-                          showarrow: false,
-                          font: {
-                            family: 'Arial',
-                            size: 12,
-                            color: 'black'
-                          }
-                        }
-                      ]
                     }
                   ],
                   label: 'Unique Users Per station',
@@ -412,7 +335,8 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                       x: [Object.keys(hlls)],
                       y: clientsAllStations,
                       name: Array(stationsSorted.length).fill(""),
-                      type: 'bar'
+                      type: 'bar',
+                      hovertemplate: '(%{x}, %{value:.3s})',
                     },
                     {
                       title: 'Number of unique users of all specified stations per '+details,
@@ -430,10 +354,11 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                 {
                   args: [
                     {
-                      x: barData.map(bar => bar.x),
-                      y: barData.map(bar => bar.y2),
-                      name: barData.map(bar => bar.name),
-                      type: 'bar'
+                      x: barData.map(bar => bar.x).reverse(),
+                      y: barData.map(bar => bar.y2).reverse(),
+                      name: barData.map(bar => bar.name).reverse(),
+                      type: 'bar',
+                      hovertemplate: '(%{x}, %{value:.3s})',
                     },
                     {
                       title: 'Number of bytes per '+details,
@@ -447,69 +372,28 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                   label: 'Bytes',
                   method: 'update'
                 },
-                // total requests button
+                // requests button
                 {
                   args: [
                     {
-                      x: barData.map(bar => bar.x),
-                      y: barData.map(bar => bar.y3),
-                      name: barData.map(bar => bar.name),
-                      type: 'bar'
+                      x: barData.map(bar => bar.x).reverse(),
+                      y: barData.map(bar => bar.y3).reverse(),
+                      name: barData.map(bar => bar.name).reverse(),
+                      type: 'bar',
+                      hovertemplate: '(%{x}, %{value:.3s})',
                     },
                     {
-                      title: 'Number of total requests per '+details,
+                      title: 'Number of requests per '+details,
                       yaxis: {
-                        title: 'Total Requests'
+                        title: 'Requests'
                       },
                       showlegend: true,
                       annotations: []
                     }
                   ],
-                  label: 'Total Requests',
+                  label: 'Requests',
                   method: 'update'
                 },
-                // successful requests button
-                {
-                  args: [
-                    {
-                      x: barData.map(bar => bar.x),
-                      y: barData.map(bar => bar.y4),
-                      name: barData.map(bar => bar.name),
-                      type: 'bar'
-                    },
-                    {
-                      title: 'Number of successful requests per '+details,
-                      yaxis: {
-                        title: 'Successful Requests'
-                      },
-                      showlegend: true,
-                      annotations: []
-                    }
-                  ],
-                  label: 'Successful Requests',
-                  method: 'update'
-                },
-                // unsuccessful requests button
-                {
-                  args: [
-                    {
-                      x: barData.map(bar => bar.x),
-                      y: barData.map(bar => bar.y5),
-                      name: barData.map(bar => bar.name),
-                      type: 'bar'
-                    },
-                    {
-                      title: 'Number of unsuccessful requests per '+details,
-                      yaxis: {
-                        title: 'Unsuccessful Requests'
-                      },
-                      showlegend: true,
-                      annotations: []
-                    }
-                  ],
-                  label: 'Unsuccessful Requests',
-                  method: 'update'
-                }
               ],
               direction: 'down',
               type: 'buttons'
@@ -521,7 +405,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
           else if (details === "month") {
             barLayout.xaxis["dtick"] = "M1";
           }
-          Plotly.newPlot(details+'-plots', barData.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: 'bar', hovertemplate: '(%{x}, %{value:.3s})'})), barLayout, {displaylogo: false});
+          Plotly.newPlot(details+'-plots', barData.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: bar.type, hovertemplate: bar.hovertemplate})), barLayout, {displaylogo: false});
         })
         .catch((error) => console.log(error));
     }
@@ -555,14 +439,12 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                 country: result.country,
                 clients: new HLL(11, 5),
                 bytes: 0,
-                nb_reqs: 0,
-                nb_successful_reqs: 0,
+                nb_reqs: 0
               };
             }
             aggregate[result.country].clients.union(fromHexString(result.hll_clients).hllSet);
             aggregate[result.country].bytes += result.bytes;
             aggregate[result.country].nb_reqs += result.nb_reqs;
-            aggregate[result.country].nb_successful_reqs += result.nb_successful_reqs;
             return aggregate;
           }, {});
           for (const country in aggregatedResults) {
@@ -628,7 +510,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                   label: 'Bytes',
                   method: 'update'
                 },
-                // total requests button
+                // requests button
                 {
                   args: [
                     {
@@ -639,54 +521,19 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                       reversescale: true
                     },
                     {
-                      title: 'Number of unique users per country',
+                      title: 'Number of requests per country',
                     }
                   ],
-                  label: 'Total Requests',
+                  label: 'Requests',
                   method: 'update'
                 },
-                // successful requests button
-                {
-                  args: [
-                    {
-                      z: [Object.values(aggregatedResults).map(result => result.nb_successful_reqs)],
-                      type: 'choroplethmapbox',
-                      colorscale: 'Viridis',
-                      autocolorscale: false,
-                      reversescale: true
-                    },
-                    {
-                      title: 'Number of successful requests per country',
-                    }
-                  ],
-                  label: 'Successful Requests',
-                  method: 'update'
-                },
-                // unsuccessful requests button
-                {
-                  args: [
-                    {
-                      z: [Object.values(aggregatedResults).map(result => result.nb_reqs - result.nb_successful_reqs)],
-                      type: 'choroplethmapbox',
-                      colorscale: 'Viridis',
-                      autocolorscale: false,
-                      reversescale: true
-                    },
-                    {
-                      title: 'Number of unsuccessful requests per country',
-                    }
-                  ],
-                  label: 'Unsuccessful Requests',
-                  method: 'update'
-                }
               ],
               direction: 'down',
               type: 'buttons'
             }]
           };
           Plotly.newPlot('country-plots', mapData, mapLayout, {displaylogo: false});
-
-          const stationsSorted = Array.from(new Set(data.results.map(result => result.station))).sort((a, b) => a.localeCompare(b));
+          const stationsSorted = Array.from(new Set(data.results.map(result => result.network ? result.network + '.' + result.station : result.station))).sort((a, b) => a.localeCompare(b));
           let stationCheckboxes = stationsSorted.map((station, index) => (
             <div key={index}>
               <input type="checkbox" id={`station-${index}`} value={station} defaultChecked onChange={handleCheckboxClick} />
@@ -734,14 +581,12 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                   country: result.country,
                   clients: new HLL(11, 5),
                   bytes: 0,
-                  nb_reqs: 0,
-                  nb_successful_reqs: 0,
+                  nb_reqs: 0
                 };
               }
               aggregate[result.country].clients.union(fromHexString(result.hll_clients).hllSet);
               aggregate[result.country].bytes += result.bytes;
               aggregate[result.country].nb_reqs += result.nb_reqs;
-              aggregate[result.country].nb_successful_reqs += result.nb_successful_reqs;
               return aggregate;
             }, {});
             for (const country in aggregatedResults) {
@@ -756,10 +601,6 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                 return result.bytes;
               } else if (activeButtonIndex === 2) {
                 return result.nb_reqs;
-              } else if (activeButtonIndex === 3) {
-                return result.nb_successful_reqs;
-              } else if (activeButtonIndex === 4) {
-                return result.nb_reqs - result.nb_successful_reqs;
               }
             });
             const newMapData = [{
@@ -780,10 +621,6 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                 button.args[0].z = [Object.values(aggregatedResults).map(result => result.bytes)]
               } else if (button && index === 2) {
                 button.args[0].z = [Object.values(aggregatedResults).map(result => result.nb_reqs)]
-              } else if (button && index === 3) {
-                button.args[0].z = [Object.values(aggregatedResults).map(result => result.nb_successful_reqs)]
-              } else if (button && index === 4) {
-                button.args[0].z = [Object.values(aggregatedResults).map(result => result.nb_reqs - result.nb_successful_reqs)]
               }
             });
             Plotly.react('country-plots', newMapData, mapLayout);
