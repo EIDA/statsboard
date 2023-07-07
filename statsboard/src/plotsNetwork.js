@@ -337,7 +337,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                   {
                     values: [groupedDataTot.values],
                     labels: [groupedDataTot.labels],
-                    customdata: groupedDataTot.labels.map(label => label === 'Less than 3%' ? groupedDataTot.belongsInLess.join('<br>') : ''),
+                    customdata: [groupedDataTot.labels.map(label => label === 'Less than 3%' ? groupedDataTot.belongsInLess.join('<br>') : '')],
                     type: 'pie',
                     sort: false
                   },
@@ -354,7 +354,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                   {
                     values: [groupedDataSucc.values],
                     labels: [groupedDataSucc.labels],
-                    customdata: groupedDataSucc.labels.map(label => label === 'Less than 3%' ? groupedDataSucc.belongsInLess.join('<br>') : ''),
+                    customdata: [groupedDataSucc.labels.map(label => label === 'Less than 3%' ? groupedDataSucc.belongsInLess.join('<br>') : '')],
                     type: 'pie',
                     sort: false
                   },
@@ -371,7 +371,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                   {
                     values: [groupedDataUnsucc.values],
                     labels: [groupedDataUnsucc.labels],
-                    customdata: groupedDataUnsucc.labels.map(label => label === 'Less than 3%' ? groupedDataUnsucc.belongsInLess.join('<br>') : ''),
+                    customdata: [groupedDataUnsucc.labels.map(label => label === 'Less than 3%' ? groupedDataUnsucc.belongsInLess.join('<br>') : '')],
                     type: 'pie',
                     sort: false
                   },
