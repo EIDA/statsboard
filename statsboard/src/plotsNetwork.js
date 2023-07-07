@@ -434,9 +434,9 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
         .then((data) => {
           let networksSorted;
           if (single) {
-            networksSorted = Array.from(new Set(data.results.map(result => result.node))).sort((a, b) => a.localeCompare(b)).reverse();
+            networksSorted = Array.from(new Set(data.results.map(result => result.node))).sort((a, b) => a.localeCompare(b));
           } else {
-            networksSorted = Array.from(new Set(data.results.map(result => result.network))).sort((a, b) => a.localeCompare(b)).reverse();
+            networksSorted = Array.from(new Set(data.results.map(result => result.network))).sort((a, b) => a.localeCompare(b));
           }
           // calculate hll values for total clients all networks bar plot
           let hlls = {};
@@ -486,7 +486,8 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
               y4: aggregatedResults.map(result => result.y4),
               y5: aggregatedResults.map(result => result.y5),
               name: single ? `${net} (${network})` : (network ? network : "N/A"),
-              type: 'bar'
+              type: 'scatter',
+              hovertemplate: '(%{x}, %{y:.3s})',
             };
           });
           let barLayout = {
@@ -504,20 +505,6 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
               title: 'Unique users*'
             },
             showlegend: true,
-            annotations: [
-              {
-                y: -0.32,
-                xref: 'paper',
-                yref: 'paper',
-                text: '*<i>Important note: The number of unique users is correct for each network. However, the total number of unique users for all selected networks,<br> i.e. the height of the bars, does not represent the real value, as many clients may have asked data from multiple networks.<\i>',
-                showarrow: false,
-                font: {
-                  family: 'Arial',
-                  size: 12,
-                  color: 'black'
-                }
-              }
-            ],
             updatemenus: [{
               buttons: [
                 // clients per network button
@@ -527,7 +514,8 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                       x: barData.map(bar => bar.x),
                       y: barData.map(bar => bar.y1),
                       name: barData.map(bar => bar.name),
-                      type: 'bar'
+                      type: 'scatter',
+                      hovertemplate: '(%{x}, %{y:.3s})',
                     },
                     {
                       title: 'Number of users* per '+details,
@@ -535,20 +523,6 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                         title: 'Unique users*'
                       },
                       showlegend: true,
-                      annotations: [
-                        {
-                          y: -0.32,
-                          xref: 'paper',
-                          yref: 'paper',
-                          text: '*<i>Important note: The number of unique users is correct for each network. However, the total number of unique users for all selected networks,<br> i.e. the height of the bars, does not represent the real value, as many clients may have asked data from multiple networks.<\i>',
-                          showarrow: false,
-                          font: {
-                            family: 'Arial',
-                            size: 12,
-                            color: 'black'
-                          }
-                        }
-                      ]
                     }
                   ],
                   label: 'Users Per Network',
@@ -561,7 +535,8 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                       x: [Object.keys(hlls)],
                       y: clientsAllNetworks,
                       name: Array(networksSorted.length).fill(""),
-                      type: 'bar'
+                      type: 'bar',
+                      hovertemplate: '(%{x}, %{value:.3s})',
                     },
                     {
                       title: 'Number of unique users of all specified networks per '+details,
@@ -579,10 +554,11 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                 {
                   args: [
                     {
-                      x: barData.map(bar => bar.x),
-                      y: barData.map(bar => bar.y2),
-                      name: barData.map(bar => bar.name),
-                      type: 'bar'
+                      x: barData.map(bar => bar.x).reverse(),
+                      y: barData.map(bar => bar.y2).reverse(),
+                      name: barData.map(bar => bar.name).reverse(),
+                      type: 'bar',
+                      hovertemplate: '(%{x}, %{value:.3s})',
                     },
                     {
                       title: 'Number of bytes per '+details,
@@ -600,10 +576,11 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                 {
                   args: [
                     {
-                      x: barData.map(bar => bar.x),
-                      y: barData.map(bar => bar.y3),
-                      name: barData.map(bar => bar.name),
-                      type: 'bar'
+                      x: barData.map(bar => bar.x).reverse(),
+                      y: barData.map(bar => bar.y3).reverse(),
+                      name: barData.map(bar => bar.name).reverse(),
+                      type: 'bar',
+                      hovertemplate: '(%{x}, %{value:.3s})',
                     },
                     {
                       title: 'Number of total requests per '+details,
@@ -621,10 +598,11 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                 {
                   args: [
                     {
-                      x: barData.map(bar => bar.x),
-                      y: barData.map(bar => bar.y4),
-                      name: barData.map(bar => bar.name),
-                      type: 'bar'
+                      x: barData.map(bar => bar.x).reverse(),
+                      y: barData.map(bar => bar.y4).reverse(),
+                      name: barData.map(bar => bar.name).reverse(),
+                      type: 'bar',
+                      hovertemplate: '(%{x}, %{value:.3s})',
                     },
                     {
                       title: 'Number of successful requests per '+details,
@@ -642,10 +620,11 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                 {
                   args: [
                     {
-                      x: barData.map(bar => bar.x),
-                      y: barData.map(bar => bar.y5),
-                      name: barData.map(bar => bar.name),
-                      type: 'bar'
+                      x: barData.map(bar => bar.x).reverse(),
+                      y: barData.map(bar => bar.y5).reverse(),
+                      name: barData.map(bar => bar.name).reverse(),
+                      type: 'bar',
+                      hovertemplate: '(%{x}, %{value:.3s})',
                     },
                     {
                       title: 'Number of unsuccessful requests per '+details,
@@ -670,7 +649,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
           else if (details === "month") {
             barLayout.xaxis["dtick"] = "M1";
           }
-          Plotly.newPlot(details+'-plots', barData.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: 'bar', hovertemplate: '(%{x}, %{value:.3s})'})), barLayout, {displaylogo: false});
+          Plotly.newPlot(details+'-plots', barData.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: bar.type, hovertemplate: bar.hovertemplate})), barLayout, {displaylogo: false});
         })
         .catch((error) => console.log(error));
     }

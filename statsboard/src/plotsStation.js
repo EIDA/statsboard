@@ -262,7 +262,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
           }
         })
         .then((data) => {
-          const stationsSorted = Array.from(new Set(data.results.map(result => result.network + '.' + result.station))).sort((a, b) => a.localeCompare(b)).reverse();
+          const stationsSorted = Array.from(new Set(data.results.map(result => result.network + '.' + result.station))).sort((a, b) => a.localeCompare(b));
           // calculate hll values for total clients all stations bar plot
           let hlls = {};
           data.results.forEach(result => {
@@ -286,7 +286,8 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                 y2: stationResults.map(result => result.bytes),
                 y3: stationResults.map(result => result.nb_reqs),
                 name: station,
-                type: 'bar'
+                type: 'scatter',
+                hovertemplate: '(%{x}, %{y:.3s})',
               }
           });
           let barLayout = {
@@ -304,20 +305,6 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
               title: 'Unique users*'
             },
             showlegend: true,
-            annotations: [
-              {
-                y: -0.32,
-                xref: 'paper',
-                yref: 'paper',
-                text: '*<i>Important note: The number of unique users is correct for each station. However, the total number of unique users for all selected stations,<br> i.e. the height of the bars, does not represent the real value, as many clients may have asked data from multiple stations.<\i>',
-                showarrow: false,
-                font: {
-                  family: 'Arial',
-                  size: 12,
-                  color: 'black'
-                }
-              }
-            ],
             updatemenus: [{
               buttons: [
                 // clients per station button
@@ -327,7 +314,8 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                       x: barData.map(bar => bar.x),
                       y: barData.map(bar => bar.y1),
                       name: barData.map(bar => bar.name),
-                      type: 'bar'
+                      type: 'scatter',
+                      hovertemplate: '(%{x}, %{y:.3s})',
                     },
                     {
                       title: 'Number of unique users* per '+details,
@@ -335,20 +323,6 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                         title: 'Unique users*'
                       },
                       showlegend: true,
-                      annotations: [
-                        {
-                          y: -0.32,
-                          xref: 'paper',
-                          yref: 'paper',
-                          text: '*<i>Important note: The number of unique users is correct for each station. However, the total number of unique users for all selected stations,<br> i.e. the height of the bars, does not represent the real value, as many clients may have asked data from multiple stations.<\i>',
-                          showarrow: false,
-                          font: {
-                            family: 'Arial',
-                            size: 12,
-                            color: 'black'
-                          }
-                        }
-                      ]
                     }
                   ],
                   label: 'Unique Users Per station',
@@ -361,7 +335,8 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                       x: [Object.keys(hlls)],
                       y: clientsAllStations,
                       name: Array(stationsSorted.length).fill(""),
-                      type: 'bar'
+                      type: 'bar',
+                      hovertemplate: '(%{x}, %{value:.3s})',
                     },
                     {
                       title: 'Number of unique users of all specified stations per '+details,
@@ -379,10 +354,11 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                 {
                   args: [
                     {
-                      x: barData.map(bar => bar.x),
-                      y: barData.map(bar => bar.y2),
-                      name: barData.map(bar => bar.name),
-                      type: 'bar'
+                      x: barData.map(bar => bar.x).reverse(),
+                      y: barData.map(bar => bar.y2).reverse(),
+                      name: barData.map(bar => bar.name).reverse(),
+                      type: 'bar',
+                      hovertemplate: '(%{x}, %{value:.3s})',
                     },
                     {
                       title: 'Number of bytes per '+details,
@@ -400,10 +376,11 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
                 {
                   args: [
                     {
-                      x: barData.map(bar => bar.x),
-                      y: barData.map(bar => bar.y3),
-                      name: barData.map(bar => bar.name),
-                      type: 'bar'
+                      x: barData.map(bar => bar.x).reverse(),
+                      y: barData.map(bar => bar.y3).reverse(),
+                      name: barData.map(bar => bar.name).reverse(),
+                      type: 'bar',
+                      hovertemplate: '(%{x}, %{value:.3s})',
                     },
                     {
                       title: 'Number of requests per '+details,
@@ -428,7 +405,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
           else if (details === "month") {
             barLayout.xaxis["dtick"] = "M1";
           }
-          Plotly.newPlot(details+'-plots', barData.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: 'bar', hovertemplate: '(%{x}, %{value:.3s})'})), barLayout, {displaylogo: false});
+          Plotly.newPlot(details+'-plots', barData.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: bar.type, hovertemplate: bar.hovertemplate})), barLayout, {displaylogo: false});
         })
         .catch((error) => console.log(error));
     }
