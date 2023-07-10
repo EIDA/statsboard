@@ -32,6 +32,7 @@ function App() {
   const [network, setNetwork] = useState([]);
   const [inputNetwork, setInputNetwork] = useState("");
   const [station, setStation] = useState("");
+  const [topN, setTopN] = useState(10);
 
   function handleClick() {
     if (!showError) {
@@ -88,17 +89,11 @@ function App() {
         case "network":
           let file = new FormData();
           file.append('file', authTokenFile);
-          // if multiple networks asked
+          // the below is true if multiple networks asked
           const strNets = isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork);
-          if (!strNets || strNets.includes(',') || strNets === "") {
-            makePlotsNetwork(isAuthenticated, file, startTime, endTime, paramToPass(node, inputNode),
-              isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork));
-          }
-          // if single network asked
-          else {
-            makePlotsNetwork(isAuthenticated, file, startTime, endTime, paramToPass(node, inputNode),
-              isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork), true);
-          }
+          makePlotsNetwork(isAuthenticated, file, startTime, endTime, paramToPass(node, inputNode),
+            isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork),
+            (!strNets || strNets.includes(',') || strNets === "") ? undefined : true, (!isNaN(topN) && topN >= 0) ? topN : undefined);
           break;
         case "station":
           let fileSta = new FormData();
@@ -230,6 +225,13 @@ function App() {
               </div>
             )}
           </div>
+          {(level === "network" || level === "station") && (
+            <div id="limit">
+              <label>Show only top items in the plots and group the rest<span style={{ fontSize: '14px' }}><br></br><br></br>Enter 0 to show all items: </span></label>
+              <TextField label="Top N" type="number" size="small" sx={{ mx: 1, my: -1, maxWidth: 100 }} defaultValue={10} inputProps={{ min: 0 }}
+                InputLabelProps={{ shrink: true }} onChange={event => setTopN(parseInt(event.target.value, 10))}/>
+            </div>
+          )}
         </Grid>
         <Grid item xs={5} mt={2}>
           <div>

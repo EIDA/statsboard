@@ -13,6 +13,10 @@
   text-align: left;
 }
 
+#limit {
+  margin-top: 20px;
+}
+
 h1 {
   font-size: 26px;
   font-weight: bold;
