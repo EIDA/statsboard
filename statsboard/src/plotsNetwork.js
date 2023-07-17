@@ -433,12 +433,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
           }
         })
         .then((data) => {
-          let networksSorted;
-          if (single) {
-            networksSorted = Array.from(new Set(data.results.map(result => result.node))).sort((a, b) => a.localeCompare(b));
-          } else {
-            networksSorted = Array.from(new Set(data.results.map(result => result.network))).sort((a, b) => a.localeCompare(b));
-          }
+          let networksSet = Array.from(new Set(data.results.map(result => single ? result.node : result.network)));
           // calculate hll values for total clients all networks bar plot
           let hlls = {};
           data.results.forEach(result => {
@@ -447,21 +442,9 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
             }
             hlls[result.date].union(fromHexString(result.hll_clients).hllSet);
           });
-          // needed for clients of all specified networks plot
-          let clientsAllNetworks = [];
-          networksSorted.forEach(network => {
-            clientsAllNetworks.push([]);
-          });
-          clientsAllNetworks[networksSorted.length - 1] = Object.values(hlls).map(hll => hll.cardinality());
-          // show clients at first
-          // take care the case of shared networks
-          const barData = networksSorted.map(network => {
-            let networkResults;
-            if (single) {
-              networkResults = data.results.filter(result => result.node === network);
-            } else {
-              networkResults = data.results.filter(result => result.network === network);
-            }
+          // organize data and take care the case of shared networks
+          const barData = networksSet.map(network => {
+            let networkResults = data.results.filter(result => single ? result.node === network : result.network === network);
             // group results by date
             const groupedResults = networkResults.reduce((grouped, result) => {
               if (!grouped[result.date]) {
@@ -491,6 +474,190 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
               hovertemplate: '(%{x}, %{y:.3s})',
             };
           });
+
+          // show topN items and group the rest for clients
+          barData.sort((a, b) => {
+            const totalA = a.y1.reduce((sum, value) => sum + value, 0);
+            const totalB = b.y1.reduce((sum, value) => sum + value, 0);
+            return totalB - totalA;
+          });
+          let otherDataClients = {
+            x: [],
+            y1: {},
+            name: 'Grouped Items',
+            type: 'scatter',
+            hovertemplate: '(%{x}, %{y:.3s})',
+          };
+          let barDataClients = [...barData];
+          if (barDataClients.length > topN) {
+            for (let i = topN; i < barDataClients.length; i++) {
+              const item = barDataClients[i];
+              item.x.forEach((date, i) => {
+                if (!otherDataClients.x.includes(date)) {
+                  otherDataClients.x.push(date);
+                }
+                otherDataClients.y1[date] = (otherDataClients.y1[date] || 0) + item.y1[i];
+              });
+            }
+            otherDataClients.y1 = Object.values(otherDataClients.y1);
+            barDataClients.splice(topN, barDataClients.length - topN);
+          }
+          barDataClients.sort((a, b) => {
+            const nameA = a.name;
+            const nameB = b.name;
+            return nameA.localeCompare(nameB);
+          });
+          if (otherDataClients.x.length > 0) {
+            barDataClients.push(otherDataClients);
+          }
+          // needed for clients of all specified networks plot
+          let clientsAllNetworks = Array(barDataClients.length).fill([]);
+          clientsAllNetworks[barDataClients.length - 1] = Object.values(hlls).map(hll => hll.cardinality());
+
+          // show topN items and group the rest for bytes
+          barData.sort((a, b) => {
+            const totalA = a.y2.reduce((sum, value) => sum + value, 0);
+            const totalB = b.y2.reduce((sum, value) => sum + value, 0);
+            return totalB - totalA;
+          });
+          let otherDataBytes = {
+            x: [],
+            y2: {},
+            name: 'Grouped Items',
+            type: 'scatter',
+            hovertemplate: '(%{x}, %{y:.3s})',
+          };
+          let barDataBytes = [...barData];
+          if (barDataBytes.length > topN) {
+            for (let i = topN; i < barDataBytes.length; i++) {
+              const item = barDataBytes[i];
+              item.x.forEach((date, i) => {
+                if (!otherDataBytes.x.includes(date)) {
+                  otherDataBytes.x.push(date);
+                }
+                otherDataBytes.y2[date] = (otherDataBytes.y2[date] || 0) + item.y2[i];
+              });
+            }
+            otherDataBytes.y2 = Object.values(otherDataBytes.y2);
+            barDataBytes.splice(topN, barDataBytes.length - topN);
+          }
+          barDataBytes.sort((a, b) => {
+            const nameA = a.name;
+            const nameB = b.name;
+            return nameA.localeCompare(nameB);
+          });
+          if (otherDataBytes.x.length > 0) {
+            barDataBytes.push(otherDataBytes);
+          }
+
+          // show topN items and group the rest for total requests
+          barData.sort((a, b) => {
+            const totalA = a.y3.reduce((sum, value) => sum + value, 0);
+            const totalB = b.y3.reduce((sum, value) => sum + value, 0);
+            return totalB - totalA;
+          });
+          let otherDataTot = {
+            x: [],
+            y3: {},
+            name: 'Grouped Items',
+            type: 'scatter',
+            hovertemplate: '(%{x}, %{y:.3s})',
+          };
+          let barDataTot = [...barData];
+          if (barDataTot.length > topN) {
+            for (let i = topN; i < barDataTot.length; i++) {
+              const item = barDataTot[i];
+              item.x.forEach((date, i) => {
+                if (!otherDataTot.x.includes(date)) {
+                  otherDataTot.x.push(date);
+                }
+                otherDataTot.y3[date] = (otherDataTot.y3[date] || 0) + item.y3[i];
+              });
+            }
+            otherDataTot.y3 = Object.values(otherDataTot.y3);
+            barDataTot.splice(topN, barDataTot.length - topN);
+          }
+          barDataTot.sort((a, b) => {
+            const nameA = a.name;
+            const nameB = b.name;
+            return nameA.localeCompare(nameB);
+          });
+          if (otherDataTot.x.length > 0) {
+            barDataTot.push(otherDataTot);
+          }
+
+          // show topN items and group the rest for successful requests
+          barData.sort((a, b) => {
+            const totalA = a.y4.reduce((sum, value) => sum + value, 0);
+            const totalB = b.y4.reduce((sum, value) => sum + value, 0);
+            return totalB - totalA;
+          });
+          let otherDataSucc = {
+            x: [],
+            y4: {},
+            name: 'Grouped Items',
+            type: 'scatter',
+            hovertemplate: '(%{x}, %{y:.3s})',
+          };
+          let barDataSucc = [...barData];
+          if (barDataSucc.length > topN) {
+            for (let i = topN; i < barDataSucc.length; i++) {
+              const item = barDataSucc[i];
+              item.x.forEach((date, i) => {
+                if (!otherDataSucc.x.includes(date)) {
+                  otherDataSucc.x.push(date);
+                }
+                otherDataSucc.y4[date] = (otherDataSucc.y4[date] || 0) + item.y4[i];
+              });
+            }
+            otherDataSucc.y4 = Object.values(otherDataSucc.y4);
+            barDataSucc.splice(topN, barDataSucc.length - topN);
+          }
+          barDataSucc.sort((a, b) => {
+            const nameA = a.name;
+            const nameB = b.name;
+            return nameA.localeCompare(nameB);
+          });
+          if (otherDataSucc.x.length > 0) {
+            barDataSucc.push(otherDataSucc);
+          }
+
+          // show topN items and group the rest for unsuccessful requests
+          barData.sort((a, b) => {
+            const totalA = a.y5.reduce((sum, value) => sum + value, 0);
+            const totalB = b.y5.reduce((sum, value) => sum + value, 0);
+            return totalB - totalA;
+          });
+          let otherDataUnsucc = {
+            x: [],
+            y5: {},
+            name: 'Grouped Items',
+            type: 'scatter',
+            hovertemplate: '(%{x}, %{y:.3s})',
+          };
+          let barDataUnsucc = [...barData];
+          if (barDataUnsucc.length > topN) {
+            for (let i = topN; i < barDataUnsucc.length; i++) {
+              const item = barDataUnsucc[i];
+              item.x.forEach((date, i) => {
+                if (!otherDataUnsucc.x.includes(date)) {
+                  otherDataUnsucc.x.push(date);
+                }
+                otherDataUnsucc.y5[date] = (otherDataUnsucc.y5[date] || 0) + item.y5[i];
+              });
+            }
+            otherDataUnsucc.y5 = Object.values(otherDataUnsucc.y5);
+            barDataUnsucc.splice(topN, barDataUnsucc.length - topN);
+          }
+          barDataUnsucc.sort((a, b) => {
+            const nameA = a.name;
+            const nameB = b.name;
+            return nameA.localeCompare(nameB);
+          });
+          if (otherDataUnsucc.x.length > 0) {
+            barDataUnsucc.push(otherDataUnsucc);
+          }
+
           let barLayout = {
             height: 500,
             margin: {
@@ -512,9 +679,9 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                 {
                   args: [
                     {
-                      x: barData.map(bar => bar.x),
-                      y: barData.map(bar => bar.y1),
-                      name: barData.map(bar => bar.name),
+                      x: barDataClients.map(bar => bar.x),
+                      y: barDataClients.map(bar => bar.y1),
+                      name: barDataClients.map(bar => bar.name),
                       type: 'scatter',
                       hovertemplate: '(%{x}, %{y:.3s})',
                     },
@@ -535,7 +702,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                     {
                       x: [Object.keys(hlls)],
                       y: clientsAllNetworks,
-                      name: Array(networksSorted.length).fill(""),
+                      name: Array(clientsAllNetworks.length).fill(""),
                       type: 'bar',
                       hovertemplate: '(%{x}, %{value:.3s})',
                     },
@@ -555,9 +722,9 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                 {
                   args: [
                     {
-                      x: barData.map(bar => bar.x).reverse(),
-                      y: barData.map(bar => bar.y2).reverse(),
-                      name: barData.map(bar => bar.name).reverse(),
+                      x: barDataBytes.map(bar => bar.x).reverse(),
+                      y: barDataBytes.map(bar => bar.y2).reverse(),
+                      name: barDataBytes.map(bar => bar.name).reverse(),
                       type: 'bar',
                       hovertemplate: '(%{x}, %{value:.3s})',
                     },
@@ -577,9 +744,9 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                 {
                   args: [
                     {
-                      x: barData.map(bar => bar.x).reverse(),
-                      y: barData.map(bar => bar.y3).reverse(),
-                      name: barData.map(bar => bar.name).reverse(),
+                      x: barDataTot.map(bar => bar.x).reverse(),
+                      y: barDataTot.map(bar => bar.y3).reverse(),
+                      name: barDataTot.map(bar => bar.name).reverse(),
                       type: 'bar',
                       hovertemplate: '(%{x}, %{value:.3s})',
                     },
@@ -599,9 +766,9 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                 {
                   args: [
                     {
-                      x: barData.map(bar => bar.x).reverse(),
-                      y: barData.map(bar => bar.y4).reverse(),
-                      name: barData.map(bar => bar.name).reverse(),
+                      x: barDataSucc.map(bar => bar.x).reverse(),
+                      y: barDataSucc.map(bar => bar.y4).reverse(),
+                      name: barDataSucc.map(bar => bar.name).reverse(),
                       type: 'bar',
                       hovertemplate: '(%{x}, %{value:.3s})',
                     },
@@ -621,9 +788,9 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                 {
                   args: [
                     {
-                      x: barData.map(bar => bar.x).reverse(),
-                      y: barData.map(bar => bar.y5).reverse(),
-                      name: barData.map(bar => bar.name).reverse(),
+                      x: barDataUnsucc.map(bar => bar.x).reverse(),
+                      y: barDataUnsucc.map(bar => bar.y5).reverse(),
+                      name: barDataUnsucc.map(bar => bar.name).reverse(),
                       type: 'bar',
                       hovertemplate: '(%{x}, %{value:.3s})',
                     },
@@ -650,7 +817,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
           else if (details === "month") {
             barLayout.xaxis["dtick"] = "M1";
           }
-          Plotly.newPlot(details+'-plots', barData.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: bar.type, hovertemplate: bar.hovertemplate})), barLayout, {displaylogo: false});
+          Plotly.newPlot(details+'-plots', barDataClients.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: bar.type, hovertemplate: bar.hovertemplate})), barLayout, {displaylogo: false});
         })
         .catch((error) => console.log(error));
     }
