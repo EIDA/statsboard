@@ -2,7 +2,7 @@ import Plotly from 'plotly.js-dist';
 import ReactDOM from 'react-dom/client';
 import {HLL, fromHexString} from './js_hll'
 
-export function makePlotsStation(file, startTime, endTime, node, net, sta) {
+export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=10) {
 
   // show message while loading
   let loadingMsg = document.getElementById("loading-msg");
@@ -43,49 +43,40 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
         }
       })
       .then((data) => {
-        // sort results alphabetically by station
-        data.results.sort((a, b) => {
-          const stationA = a.network + '.' + a.station;
-          const stationB = b.network + '.' + b.station;
-          if (stationA < stationB) {
-            return -1;
-          }
-          else if (stationA > stationB) {
-            return 1;
-          }
-          return 0;
-        });
         // calculate hll values for total clients all stations indicator plot
         let hll = new HLL(11, 5);
         data.results.forEach((result) => {
           hll.union(fromHexString(result.hll_clients).hllSet);
         });
-
-        // clients plot, per station pie at first
-        // group slices with less than 2% into one
-        const thresholdClients = data.results.reduce((total, result) => total + result.clients, 0) * 0.02;
-        const filteredResultsClients = data.results.filter(result => result.clients >= thresholdClients);
-        const sumFilteredClients = filteredResultsClients.reduce((sum, result) => sum + result.clients, 0);
+        // clients plot
+        // show topN items and group the rest
+        const topDataClients = data.results.sort((a, b) => b.clients - a.clients).slice(0, topN).map(result => ({
+          station: result.network + '.' + result.station,
+          clients: result.clients
+        }));
+        topDataClients.sort((a, b) => a.station.localeCompare(b.station));
+        const totalClientsGroupedSlice = data.results.reduce((total, result) => {
+          if (!topDataClients.map(item => item.station).includes(result.network + '.' + result.station)) {
+            return total + result.clients;
+          }
+          return total;
+        }, 0);
         const groupedSliceClients = {
-          station: 'Less than 2%',
-          clients: Math.round(thresholdClients / 0.02 - sumFilteredClients),
-          belongsHere: []
+          station: 'Grouped Items',
+          clients: totalClientsGroupedSlice,
+          belongsHere: data.results.filter(result => !topDataClients.map(item => item.station).includes(result.network + '.' + result.station)).map(result => result.network + '.' + result.station),
         };
         if (groupedSliceClients.clients > 0) {
-          data.results.forEach(result => {
-            if (result.clients < thresholdClients) {
-              groupedSliceClients.belongsHere.push(result.network + '.' + result.station);
-            }
-          });
-          filteredResultsClients.push(groupedSliceClients);
+          topDataClients.push({station: groupedSliceClients.station, clients: groupedSliceClients.clients});
         }
+        // per station pie at first
         const pieDataClients = {
-          values: filteredResultsClients.map(result => result.clients),
-          labels: filteredResultsClients.map(result => result.network ? result.network + '.' + result.station : result.station),
+          values: topDataClients.map(item => item.clients),
+          labels: topDataClients.map(item => item.station),
           type: 'pie',
           texttemplate: '%{value:.3s}',
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra>%{customdata}</extra>',
-          customdata: filteredResultsClients.map(result => result.station === 'Less than 2%' ? result.belongsHere.join('<br>') : ''),
+          customdata: topDataClients.map(result => result.station === 'Grouped Items' ? groupedSliceClients.belongsHere.join('<br>') : ''),
           sort: false
         };
         const pieLayoutClients = {
@@ -111,7 +102,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
               {
                 args: [
                   {
-                    values: [filteredResultsClients.map(result => result.clients)],
+                    values: [topDataClients.map(item => item.clients)],
                     type: 'pie',
                     sort: false
                   },
@@ -162,30 +153,33 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
         Plotly.newPlot('total-clients', [pieDataClients], pieLayoutClients, {displaylogo: false});
 
         // bytes plot
-        // group slices with less than 3% into one
-        const thresholdBytes = data.results.reduce((total, result) => total + result.bytes, 0) * 0.03;
-        const filteredResultsBytes = data.results.filter(result => result.bytes >= thresholdBytes);
-        const sumFilteredBytes = filteredResultsBytes.reduce((sum, result) => sum + result.bytes, 0);
+        // show topN items and group the rest
+        const topDataBytes = data.results.sort((a, b) => b.bytes - a.bytes).slice(0, topN).map(result => ({
+          station: result.network + '.' + result.station,
+          bytes: result.bytes
+        }));
+        topDataBytes.sort((a, b) => a.station.localeCompare(b.station));
+        const totalBytesGroupedSlice = data.results.reduce((total, result) => {
+          if (!topDataBytes.map(item => item.station).includes(result.network + '.' + result.station)) {
+            return total + result.bytes;
+          }
+          return total;
+        }, 0);
         const groupedSliceBytes = {
-          station: 'Less than 3%',
-          bytes: Math.round(thresholdBytes / 0.03 - sumFilteredBytes),
-          belongsHere: []
+          station: 'Grouped Items',
+          bytes: totalBytesGroupedSlice,
+          belongsHere: data.results.filter(result => !topDataBytes.map(item => item.station).includes(result.network + '.' + result.station)).map(result => result.network + '.' + result.station),
         };
         if (groupedSliceBytes.bytes > 0) {
-          data.results.forEach(result => {
-            if (result.bytes < thresholdBytes) {
-              groupedSliceBytes.belongsHere.push(result.network + '.' + result.station);
-            }
-          });
-          filteredResultsBytes.push(groupedSliceBytes);
+          topDataBytes.push({station: groupedSliceBytes.station, bytes: groupedSliceBytes.bytes});
         }
         const pieDataBytes = {
-          values: filteredResultsBytes.map(result => result.bytes),
-          labels: filteredResultsBytes.map(result => result.network ? result.network + '.' + result.station : result.station),
+          values: topDataBytes.map(item => item.bytes),
+          labels: topDataBytes.map(item => item.station),
           type: 'pie',
           texttemplate: '%{value:.3s}',
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra>%{customdata}</extra>',
-          customdata: filteredResultsBytes.map(result => result.station === 'Less than 3%' ? result.belongsHere.join('<br>') : ''),
+          customdata: topDataBytes.map(result => result.station === 'Grouped Items' ? groupedSliceBytes.belongsHere.join('<br>') : ''),
           sort: false
         };
         const pieLayoutBytes = {
@@ -194,30 +188,33 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta) {
         Plotly.newPlot('total-bytes', [pieDataBytes], pieLayoutBytes, {displaylogo: false});
 
         // requests plot
-        // group slices with less than 2% into one
-        const thresholdReq = data.results.reduce((total, result) => total + result.nb_reqs, 0) * 0.02;
-        const filteredResultsReq = data.results.filter(result => result.nb_reqs >= thresholdReq);
-        const sumFilteredReq = filteredResultsReq.reduce((sum, result) => sum + result.nb_reqs, 0);
-        const groupedSliceReq = {
-          station: 'Less than 2%',
-          nb_reqs: Math.round(thresholdReq / 0.02 - sumFilteredReq),
-          belongsHere: []
+        // show topN items and group the rest
+        const topDataRequests = data.results.sort((a, b) => b.nb_reqs - a.nb_reqs).slice(0, topN).map(result => ({
+          station: result.network + '.' + result.station,
+          nb_reqs: result.nb_reqs
+        }));
+        topDataRequests.sort((a, b) => a.station.localeCompare(b.station));
+        const totalRequestsGroupedSlice = data.results.reduce((total, result) => {
+          if (!topDataRequests.map(item => item.station).includes(result.network + '.' + result.station)) {
+            return total + result.nb_reqs;
+          }
+          return total;
+        }, 0);
+        const groupedSliceRequests = {
+          station: 'Grouped Items',
+          nb_reqs: totalRequestsGroupedSlice,
+          belongsHere: data.results.filter(result => !topDataRequests.map(item => item.station).includes(result.network + '.' + result.station)).map(result => result.network + '.' + result.station),
         };
-        if (groupedSliceReq.nb_reqs > 0) {
-          data.results.forEach(result => {
-            if (result.nb_reqs < thresholdReq) {
-              groupedSliceReq.belongsHere.push(result.network + '.' + result.station);
-            }
-          });
-          filteredResultsReq.push(groupedSliceReq);
+        if (groupedSliceRequests.nb_reqs > 0) {
+          topDataRequests.push({station: groupedSliceRequests.station, nb_reqs: groupedSliceRequests.nb_reqs});
         }
         const pieDataRequests = {
-          values: filteredResultsReq.map(result => result.nb_reqs),
-          labels: filteredResultsReq.map(result => result.network ? result.network + '.' + result.station : result.station),
+          values: topDataRequests.map(item => item.nb_reqs),
+          labels: topDataRequests.map(item => item.station),
           type: 'pie',
           texttemplate: '%{value:.3s}',
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra>%{customdata}</extra>',
-          customdata: filteredResultsReq.map(result => result.station === 'Less than 2%' ? result.belongsHere.join('<br>') : ''),
+          customdata: topDataRequests.map(result => result.station === 'Grouped Items' ? groupedSliceRequests.belongsHere.join('<br>') : ''),
           sort: false
         };
         const pieLayoutRequests = {

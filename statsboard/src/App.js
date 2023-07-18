@@ -98,7 +98,8 @@ function App() {
         case "station":
           let fileSta = new FormData();
           fileSta.append('file', authTokenFile);
-          makePlotsStation(fileSta, startTime, endTime, paramToPass(node, inputNode), paramToPass(network, inputNetwork), station);
+          makePlotsStation(fileSta, startTime, endTime, paramToPass(node, inputNode), paramToPass(network, inputNetwork), station,
+            (!isNaN(topN) && topN >= 0) ? topN : undefined);
           break;
         default:
           setShowError("Choose level to plot statistics!")
