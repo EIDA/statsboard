@@ -2,7 +2,7 @@ import Plotly from 'plotly.js-dist';
 import ReactDOM from 'react-dom/client';
 import {HLL, fromHexString} from './js_hll'
 
-export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node, net, single=false) {
+export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node, net, single=false, topN=10) {
 // if single=true toggle mode for one (shared) network, i.e. show statistics per node that shares this network
 
   // show message while loading
@@ -49,65 +49,50 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
         }
       })
       .then((data) => {
-        // sort results alphabetically by network
-        data.results.sort((a, b) => {
-          const networkA = a.network;
-          const networkB = b.network;
-          if (networkA < networkB) {
-            return -1;
-          } else if (networkA > networkB) {
-            return 1;
-          }
-          return 0;
-        });
         // calculate hll values for shared networks and for total clients all networks indicator plot
         let foundNets = {};
         let hll = new HLL(11, 5);
         data.results.forEach((result) => {
-          let network;
-          if (single) {
-            network = result.node;
-          } else {
-            network = result.network || "N/A";
-          }
-          const clients = result.hll_clients;
+          let network = single ? result.node : result.network || "N/A";
           if (foundNets[network]) {
             foundNets[network].union(fromHexString(result.hll_clients).hllSet);
           } else {
-            foundNets[network] = fromHexString(clients).hllSet;
+            foundNets[network] = fromHexString(result.hll_clients).hllSet;
           }
           hll.union(fromHexString(result.hll_clients).hllSet);
         });
-        // group slices with less than 3% into one
-        const thresholdClients = Object.values(foundNets).reduce((total, value) => total + value.cardinality(), 0) * 0.03;
-        let groupedDataClients = {values: [], labels: [], belongsInLess: []};
-        Object.entries(foundNets).forEach(([network, value]) => {
-          if (value.cardinality() >= thresholdClients) {
-            groupedDataClients.values.push(value);
-            if (single) {
-              groupedDataClients.labels.push(`${net} (${network})`);
-            } else {
-              groupedDataClients.labels.push(network);
-            }
+        // show topN items and group the rest
+        let groupedDataClients = { values: [], labels: [], belongsInLess: [] };
+        let otherValueClients = 0;
+        const sortedNetsClients = Object.entries(foundNets).sort((a, b) => b[1].cardinality() - a[1].cardinality());
+        sortedNetsClients.forEach(([network, value], index) => {
+          if (index < topN) {
+            groupedDataClients.values.push(value.cardinality());
+            groupedDataClients.labels.push(single ? `${net} (${network})` : network);
           } else {
             groupedDataClients.belongsInLess.push(network);
-            if (!groupedDataClients.labels.includes('Less than 3%')) {
-              groupedDataClients.values.push(value);
-              groupedDataClients.labels.push('Less than 3%');
-            } else {
-              const index = groupedDataClients.labels.indexOf('Less than 3%');
-              groupedDataClients.values[index].union(value);
-            }
+            otherValueClients += value.cardinality();
           }
         });
+        // sort alphabetically
+        const sortedDataClients = groupedDataClients.labels.map((label, index) => ({
+          label,
+          value: groupedDataClients.values[index]
+        })).sort((a, b) => a.label.localeCompare(b.label));
+        groupedDataClients.labels = sortedDataClients.map(item => item.label);
+        groupedDataClients.values = sortedDataClients.map(item => item.value);
+        if (otherValueClients > 0) {
+          groupedDataClients.values.push(otherValueClients);
+          groupedDataClients.labels.push('Grouped Items');
+        }
         // clients plot, per network pie at first
         let pieDataClients = {
-          values: groupedDataClients.values.map(value => value.cardinality()),
+          values: groupedDataClients.values,
           labels: groupedDataClients.labels,
           type: 'pie',
           texttemplate: '%{value:.3s}',
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra>%{customdata}</extra>',
-          customdata: groupedDataClients.labels.map(label => label === 'Less than 3%' ? groupedDataClients.belongsInLess.join('<br>') : ''),
+          customdata: groupedDataClients.labels.map(label => label === 'Grouped Items' ? groupedDataClients.belongsInLess.join('<br>') : ''),
           sort: false
         };
         const pieLayoutClients = {
@@ -133,7 +118,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
               {
                 args: [
                   {
-                    values: [groupedDataClients.values.map(value => value.cardinality())],
+                    values: [groupedDataClients.values],
                     type: 'pie',
                     sort: false
                   },
@@ -186,50 +171,50 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
         // bytes plot
         // take care of shared networks
         const sharedBytes = data.results.reduce((accumulator, result) => {
-          let network;
-          if (single) {
-            network = result.node;
-          } else {
-            network = result.network || "N/A";
-          }
+          let network = single ? result.node : result.network || "N/A";
           const index = accumulator.networks.indexOf(network);
           if (index !== -1) {
             accumulator.bytes[index] += result.bytes;
           } else {
             accumulator.bytes.push(result.bytes);
-            if (single) {
-              accumulator.networks.push(`${net} (${network})`);
-            } else {
-              accumulator.networks.push(network);
-            }
+            accumulator.networks.push(single ? `${net} (${network})` : network);
           }
           return accumulator;
         }, { bytes: [], networks: [] });
-        // group slices with less than 3% into one
-        const thresholdBytes = data.results.reduce((total, result) => total + result.bytes, 0) * 0.03;
-        const groupedDataBytes = sharedBytes.networks.reduce((accumulator, network, index) => {
-          if (sharedBytes.bytes[index] >= thresholdBytes) {
-            accumulator.values.push(sharedBytes.bytes[index]);
-            accumulator.labels.push(network);
+        // show topN items and group the rest
+        let groupedDataBytes = { values: [], labels: [], belongsInLess: [] };
+        let otherValueBytes = 0;
+        const sortedNetsBytes = sharedBytes.networks.map((network, index) => ({
+          network,
+          bytes: sharedBytes.bytes[index]
+        })).sort((a, b) => b.bytes - a.bytes);
+        sortedNetsBytes.forEach(({ network, bytes }, index) => {
+          if (index < topN) {
+            groupedDataBytes.values.push(bytes);
+            groupedDataBytes.labels.push(single ? `${net} (${network})` : network);
           } else {
-            accumulator.belongsInLess.push(network);
-            if (!accumulator.labels.includes('Less than 3%')) {
-              accumulator.values.push(sharedBytes.bytes[index]);
-              accumulator.labels.push('Less than 3%');
-            } else {
-              const lessThan3Index = accumulator.labels.indexOf('Less than 3%');
-              accumulator.values[lessThan3Index] += sharedBytes.bytes[index];
-            }
+            groupedDataBytes.belongsInLess.push(network);
+            otherValueBytes += bytes;
           }
-          return accumulator;
-        }, { values: [], labels: [], belongsInLess: [] });
+        });
+        // sort alphabetically
+        const sortedDataBytes = groupedDataBytes.labels.map((label, index) => ({
+          label,
+          value: groupedDataBytes.values[index]
+        })).sort((a, b) => a.label.localeCompare(b.label));
+        groupedDataBytes.labels = sortedDataBytes.map(item => item.label);
+        groupedDataBytes.values = sortedDataBytes.map(item => item.value);
+        if (otherValueBytes > 0) {
+          groupedDataBytes.values.push(otherValueBytes);
+          groupedDataBytes.labels.push('Grouped Items');
+        }
         const pieDataBytes = {
           values: groupedDataBytes.values,
           labels: groupedDataBytes.labels,
           type: 'pie',
           texttemplate: '%{value:.3s}',
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra>%{customdata}</extra>',
-          customdata: groupedDataBytes.labels.map(label => label === 'Less than 3%' ? groupedDataBytes.belongsInLess.join('<br>') : ''),
+          customdata: groupedDataBytes.labels.map(label => label === 'Grouped Items' ? groupedDataBytes.belongsInLess.join('<br>') : ''),
           sort: false
         };
         const pieLayoutBytes = {
@@ -240,12 +225,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
         // requests plot
         // take care of shared networks
         const sharedReq = data.results.reduce((accumulator, result) => {
-          let network;
-          if (single) {
-            network = result.node;
-          } else {
-            network = result.network || "N/A";
-          }
+          let network = single ? result.node : result.network || "N/A";
           const index = accumulator.networks.indexOf(network);
           if (index !== -1) {
             accumulator.nb_reqs[index] += result.nb_reqs;
@@ -253,70 +233,91 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
           } else {
             accumulator.nb_reqs.push(result.nb_reqs);
             accumulator.nb_successful_reqs.push(result.nb_successful_reqs);
-            if (single) {
-              accumulator.networks.push(`${net} (${network})`);
-            } else {
-              accumulator.networks.push(network);
-            }
+            accumulator.networks.push(single ? `${net} (${network})` : network);
           }
           return accumulator;
         }, { nb_reqs: [], nb_successful_reqs: [], networks: [] });
-        // group slices with less than 3% into one for total requests
-        const thresholdTot = data.results.reduce((total, result) => total + result.nb_reqs, 0) * 0.03;
-        const groupedDataTot = sharedReq.networks.reduce((accumulator, network, index) => {
-          if (sharedReq.nb_reqs[index] >= thresholdTot) {
-            accumulator.values.push(sharedReq.nb_reqs[index]);
-            accumulator.labels.push(network);
+        // show topN items and group the rest for total requests
+        let groupedDataTot = { values: [], labels: [], belongsInLess: [] };
+        let otherValueTot = 0;
+        const sortedNetsTot = sharedReq.networks.map((network, index) => ({
+          network,
+          nb_reqs: sharedReq.nb_reqs[index]
+        })).sort((a, b) => b.nb_reqs - a.nb_reqs);
+        sortedNetsTot.forEach(({ network, nb_reqs }, index) => {
+          if (index < topN) {
+            groupedDataTot.values.push(nb_reqs);
+            groupedDataTot.labels.push(single ? `${net} (${network})` : network);
           } else {
-            accumulator.belongsInLess.push(network);
-            if (!accumulator.labels.includes('Less than 3%')) {
-              accumulator.values.push(sharedReq.nb_reqs[index]);
-              accumulator.labels.push('Less than 3%');
-            } else {
-              const lessThan3Index = accumulator.labels.indexOf('Less than 3%');
-              accumulator.values[lessThan3Index] += sharedReq.nb_reqs[index];
-            }
+            groupedDataTot.belongsInLess.push(network);
+            otherValueTot += nb_reqs;
           }
-          return accumulator;
-        }, { values: [], labels: [], belongsInLess: [] });
-        // group slices with less than 3% into one for successful requests
-        const thresholdSucc = data.results.reduce((total, result) => total + result.nb_successful_reqs, 0) * 0.03;
-        const groupedDataSucc = sharedReq.networks.reduce((accumulator, network, index) => {
-          if (sharedReq.nb_successful_reqs[index] >= thresholdSucc) {
-            accumulator.values.push(sharedReq.nb_successful_reqs[index]);
-            accumulator.labels.push(network);
+        });
+        // sort alphabetically
+        const sortedDataTot = groupedDataTot.labels.map((label, index) => ({
+          label,
+          value: groupedDataTot.values[index]
+        })).sort((a, b) => a.label.localeCompare(b.label));
+        groupedDataTot.labels = sortedDataTot.map(item => item.label);
+        groupedDataTot.values = sortedDataTot.map(item => item.value);
+        if (otherValueTot > 0) {
+          groupedDataTot.values.push(otherValueTot);
+          groupedDataTot.labels.push('Grouped Items');
+        }
+        // show topN items and group the rest for successful requests
+        let groupedDataSucc = { values: [], labels: [], belongsInLess: [] };
+        let otherValueSucc = 0;
+        const sortedNetsSucc = sharedReq.networks.map((network, index) => ({
+          network,
+          nb_successful_reqs: sharedReq.nb_successful_reqs[index]
+        })).sort((a, b) => b.nb_successful_reqs - a.nb_successful_reqs);
+        sortedNetsSucc.forEach(({ network, nb_successful_reqs }, index) => {
+          if (index < topN) {
+            groupedDataSucc.values.push(nb_successful_reqs);
+            groupedDataSucc.labels.push(single ? `${net} (${network})` : network);
           } else {
-            accumulator.belongsInLess.push(network);
-            if (!accumulator.labels.includes('Less than 3%')) {
-              accumulator.values.push(sharedReq.nb_successful_reqs[index]);
-              accumulator.labels.push('Less than 3%');
-            } else {
-              const lessThan3Index = accumulator.labels.indexOf('Less than 3%');
-              accumulator.values[lessThan3Index] += sharedReq.nb_successful_reqs[index];
-            }
+            groupedDataSucc.belongsInLess.push(network);
+            otherValueSucc += nb_successful_reqs;
           }
-          return accumulator;
-        }, { values: [], labels: [], belongsInLess: [] });
-        // group slices with less than 3% into one for unsuccessful requests
-        const thresholdUnsucc = data.results.reduce((total, result) => total + result.nb_reqs - result.nb_successful_reqs, 0) * 0.03;
-        const groupedDataUnsucc = sharedReq.networks.reduce((accumulator, network, index) => {
-          if (sharedReq.nb_reqs[index] - sharedReq.nb_successful_reqs[index] >= thresholdUnsucc) {
-            accumulator.values.push(sharedReq.nb_reqs[index] - sharedReq.nb_successful_reqs[index]);
-            accumulator.labels.push(network);
+        });
+        // sort alphabetically
+        const sortedDataSucc = groupedDataSucc.labels.map((label, index) => ({
+          label,
+          value: groupedDataSucc.values[index]
+        })).sort((a, b) => a.label.localeCompare(b.label));
+        groupedDataSucc.labels = sortedDataSucc.map(item => item.label);
+        groupedDataSucc.values = sortedDataSucc.map(item => item.value);
+        if (otherValueSucc > 0) {
+          groupedDataSucc.values.push(otherValueSucc);
+          groupedDataSucc.labels.push('Grouped Items');
+        }
+        // show topN items and group the rest for unsuccessful requests
+        let groupedDataUnsucc = { values: [], labels: [], belongsInLess: [] };
+        let otherValueUnsucc = 0;
+        const sortedNetsUnsucc = sharedReq.networks.map((network, index) => ({
+          network,
+          nb_unsuccessful_reqs: sharedReq.nb_reqs[index] - sharedReq.nb_successful_reqs[index]
+        })).sort((a, b) => b.nb_unsuccessful_reqs - a.nb_unsuccessful_reqs);
+        sortedNetsUnsucc.forEach(({ network, nb_unsuccessful_reqs }, index) => {
+          if (index < topN) {
+            groupedDataUnsucc.values.push(nb_unsuccessful_reqs);
+            groupedDataUnsucc.labels.push(single ? `${net} (${network})` : network);
           } else {
-            accumulator.belongsInLess.push(network);
-            if (!accumulator.labels.includes('Less than 3%')) {
-              accumulator.values.push(sharedReq.nb_reqs[index] - sharedReq.nb_successful_reqs[index]);
-              accumulator.labels.push('Less than 3%');
-            } else {
-              const lessThan3Index = accumulator.labels.indexOf('Less than 3%');
-              accumulator.values[lessThan3Index] += sharedReq.nb_reqs[index] - sharedReq.nb_successful_reqs[index];
-            }
+            groupedDataUnsucc.belongsInLess.push(network);
+            otherValueUnsucc += nb_unsuccessful_reqs;
           }
-          return accumulator;
-        },
-          { values: [], labels: [], belongsInLess: [] }
-        );
+        });
+        // sort alphabetically
+        const sortedDataUnsucc = groupedDataUnsucc.labels.map((label, index) => ({
+          label,
+          value: groupedDataUnsucc.values[index]
+        })).sort((a, b) => a.label.localeCompare(b.label));
+        groupedDataUnsucc.labels = sortedDataUnsucc.map(item => item.label);
+        groupedDataUnsucc.values = sortedDataUnsucc.map(item => item.value);
+        if (otherValueUnsucc > 0) {
+          groupedDataUnsucc.values.push(otherValueUnsucc);
+          groupedDataUnsucc.labels.push('Grouped Items');
+        }
         // show total requests at first
         const pieDataRequests = {
           values: groupedDataTot.values,
@@ -324,7 +325,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
           type: 'pie',
           texttemplate: '%{value:.3s}',
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra>%{customdata}</extra>',
-          customdata: groupedDataTot.labels.map(label => label === 'Less than 3%' ? groupedDataTot.belongsInLess.join('<br>') : ''),
+          customdata: groupedDataTot.labels.map(label => label === 'Grouped Items' ? groupedDataTot.belongsInLess.join('<br>') : ''),
           sort: false
         };
         const pieLayoutRequests = {
@@ -337,7 +338,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                   {
                     values: [groupedDataTot.values],
                     labels: [groupedDataTot.labels],
-                    customdata: [groupedDataTot.labels.map(label => label === 'Less than 3%' ? groupedDataTot.belongsInLess.join('<br>') : '')],
+                    customdata: [groupedDataTot.labels.map(label => label === 'Grouped Items' ? groupedDataTot.belongsInLess.join('<br>') : '')],
                     type: 'pie',
                     sort: false
                   },
@@ -354,7 +355,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                   {
                     values: [groupedDataSucc.values],
                     labels: [groupedDataSucc.labels],
-                    customdata: [groupedDataSucc.labels.map(label => label === 'Less than 3%' ? groupedDataSucc.belongsInLess.join('<br>') : '')],
+                    customdata: [groupedDataSucc.labels.map(label => label === 'Grouped Items' ? groupedDataSucc.belongsInLess.join('<br>') : '')],
                     type: 'pie',
                     sort: false
                   },
@@ -371,7 +372,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                   {
                     values: [groupedDataUnsucc.values],
                     labels: [groupedDataUnsucc.labels],
-                    customdata: [groupedDataUnsucc.labels.map(label => label === 'Less than 3%' ? groupedDataUnsucc.belongsInLess.join('<br>') : '')],
+                    customdata: [groupedDataUnsucc.labels.map(label => label === 'Grouped Items' ? groupedDataUnsucc.belongsInLess.join('<br>') : '')],
                     type: 'pie',
                     sort: false
                   },
@@ -432,12 +433,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
           }
         })
         .then((data) => {
-          let networksSorted;
-          if (single) {
-            networksSorted = Array.from(new Set(data.results.map(result => result.node))).sort((a, b) => a.localeCompare(b));
-          } else {
-            networksSorted = Array.from(new Set(data.results.map(result => result.network))).sort((a, b) => a.localeCompare(b));
-          }
+          let networksSet = Array.from(new Set(data.results.map(result => single ? result.node : result.network)));
           // calculate hll values for total clients all networks bar plot
           let hlls = {};
           data.results.forEach(result => {
@@ -446,21 +442,9 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
             }
             hlls[result.date].union(fromHexString(result.hll_clients).hllSet);
           });
-          // needed for clients of all specified networks plot
-          let clientsAllNetworks = [];
-          networksSorted.forEach(network => {
-            clientsAllNetworks.push([]);
-          });
-          clientsAllNetworks[networksSorted.length - 1] = Object.values(hlls).map(hll => hll.cardinality());
-          // show clients at first
-          // take care the case of shared networks
-          const barData = networksSorted.map(network => {
-            let networkResults;
-            if (single) {
-              networkResults = data.results.filter(result => result.node === network);
-            } else {
-              networkResults = data.results.filter(result => result.network === network);
-            }
+          // organize data and take care the case of shared networks
+          const barData = networksSet.map(network => {
+            let networkResults = data.results.filter(result => single ? result.node === network : result.network === network);
             // group results by date
             const groupedResults = networkResults.reduce((grouped, result) => {
               if (!grouped[result.date]) {
@@ -490,6 +474,190 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
               hovertemplate: '(%{x}, %{y:.3s})',
             };
           });
+
+          // show topN items and group the rest for clients
+          barData.sort((a, b) => {
+            const totalA = a.y1.reduce((sum, value) => sum + value, 0);
+            const totalB = b.y1.reduce((sum, value) => sum + value, 0);
+            return totalB - totalA;
+          });
+          let otherDataClients = {
+            x: [],
+            y1: {},
+            name: 'Grouped Items',
+            type: 'scatter',
+            hovertemplate: '(%{x}, %{y:.3s})',
+          };
+          let barDataClients = [...barData];
+          if (barDataClients.length > topN) {
+            for (let i = topN; i < barDataClients.length; i++) {
+              const item = barDataClients[i];
+              item.x.forEach((date, i) => {
+                if (!otherDataClients.x.includes(date)) {
+                  otherDataClients.x.push(date);
+                }
+                otherDataClients.y1[date] = (otherDataClients.y1[date] || 0) + item.y1[i];
+              });
+            }
+            otherDataClients.y1 = Object.values(otherDataClients.y1);
+            barDataClients.splice(topN, barDataClients.length - topN);
+          }
+          barDataClients.sort((a, b) => {
+            const nameA = a.name;
+            const nameB = b.name;
+            return nameA.localeCompare(nameB);
+          });
+          if (otherDataClients.x.length > 0) {
+            barDataClients.push(otherDataClients);
+          }
+          // needed for clients of all specified networks plot
+          let clientsAllNetworks = Array(barDataClients.length).fill([]);
+          clientsAllNetworks[barDataClients.length - 1] = Object.values(hlls).map(hll => hll.cardinality());
+
+          // show topN items and group the rest for bytes
+          barData.sort((a, b) => {
+            const totalA = a.y2.reduce((sum, value) => sum + value, 0);
+            const totalB = b.y2.reduce((sum, value) => sum + value, 0);
+            return totalB - totalA;
+          });
+          let otherDataBytes = {
+            x: [],
+            y2: {},
+            name: 'Grouped Items',
+            type: 'scatter',
+            hovertemplate: '(%{x}, %{y:.3s})',
+          };
+          let barDataBytes = [...barData];
+          if (barDataBytes.length > topN) {
+            for (let i = topN; i < barDataBytes.length; i++) {
+              const item = barDataBytes[i];
+              item.x.forEach((date, i) => {
+                if (!otherDataBytes.x.includes(date)) {
+                  otherDataBytes.x.push(date);
+                }
+                otherDataBytes.y2[date] = (otherDataBytes.y2[date] || 0) + item.y2[i];
+              });
+            }
+            otherDataBytes.y2 = Object.values(otherDataBytes.y2);
+            barDataBytes.splice(topN, barDataBytes.length - topN);
+          }
+          barDataBytes.sort((a, b) => {
+            const nameA = a.name;
+            const nameB = b.name;
+            return nameA.localeCompare(nameB);
+          });
+          if (otherDataBytes.x.length > 0) {
+            barDataBytes.push(otherDataBytes);
+          }
+
+          // show topN items and group the rest for total requests
+          barData.sort((a, b) => {
+            const totalA = a.y3.reduce((sum, value) => sum + value, 0);
+            const totalB = b.y3.reduce((sum, value) => sum + value, 0);
+            return totalB - totalA;
+          });
+          let otherDataTot = {
+            x: [],
+            y3: {},
+            name: 'Grouped Items',
+            type: 'scatter',
+            hovertemplate: '(%{x}, %{y:.3s})',
+          };
+          let barDataTot = [...barData];
+          if (barDataTot.length > topN) {
+            for (let i = topN; i < barDataTot.length; i++) {
+              const item = barDataTot[i];
+              item.x.forEach((date, i) => {
+                if (!otherDataTot.x.includes(date)) {
+                  otherDataTot.x.push(date);
+                }
+                otherDataTot.y3[date] = (otherDataTot.y3[date] || 0) + item.y3[i];
+              });
+            }
+            otherDataTot.y3 = Object.values(otherDataTot.y3);
+            barDataTot.splice(topN, barDataTot.length - topN);
+          }
+          barDataTot.sort((a, b) => {
+            const nameA = a.name;
+            const nameB = b.name;
+            return nameA.localeCompare(nameB);
+          });
+          if (otherDataTot.x.length > 0) {
+            barDataTot.push(otherDataTot);
+          }
+
+          // show topN items and group the rest for successful requests
+          barData.sort((a, b) => {
+            const totalA = a.y4.reduce((sum, value) => sum + value, 0);
+            const totalB = b.y4.reduce((sum, value) => sum + value, 0);
+            return totalB - totalA;
+          });
+          let otherDataSucc = {
+            x: [],
+            y4: {},
+            name: 'Grouped Items',
+            type: 'scatter',
+            hovertemplate: '(%{x}, %{y:.3s})',
+          };
+          let barDataSucc = [...barData];
+          if (barDataSucc.length > topN) {
+            for (let i = topN; i < barDataSucc.length; i++) {
+              const item = barDataSucc[i];
+              item.x.forEach((date, i) => {
+                if (!otherDataSucc.x.includes(date)) {
+                  otherDataSucc.x.push(date);
+                }
+                otherDataSucc.y4[date] = (otherDataSucc.y4[date] || 0) + item.y4[i];
+              });
+            }
+            otherDataSucc.y4 = Object.values(otherDataSucc.y4);
+            barDataSucc.splice(topN, barDataSucc.length - topN);
+          }
+          barDataSucc.sort((a, b) => {
+            const nameA = a.name;
+            const nameB = b.name;
+            return nameA.localeCompare(nameB);
+          });
+          if (otherDataSucc.x.length > 0) {
+            barDataSucc.push(otherDataSucc);
+          }
+
+          // show topN items and group the rest for unsuccessful requests
+          barData.sort((a, b) => {
+            const totalA = a.y5.reduce((sum, value) => sum + value, 0);
+            const totalB = b.y5.reduce((sum, value) => sum + value, 0);
+            return totalB - totalA;
+          });
+          let otherDataUnsucc = {
+            x: [],
+            y5: {},
+            name: 'Grouped Items',
+            type: 'scatter',
+            hovertemplate: '(%{x}, %{y:.3s})',
+          };
+          let barDataUnsucc = [...barData];
+          if (barDataUnsucc.length > topN) {
+            for (let i = topN; i < barDataUnsucc.length; i++) {
+              const item = barDataUnsucc[i];
+              item.x.forEach((date, i) => {
+                if (!otherDataUnsucc.x.includes(date)) {
+                  otherDataUnsucc.x.push(date);
+                }
+                otherDataUnsucc.y5[date] = (otherDataUnsucc.y5[date] || 0) + item.y5[i];
+              });
+            }
+            otherDataUnsucc.y5 = Object.values(otherDataUnsucc.y5);
+            barDataUnsucc.splice(topN, barDataUnsucc.length - topN);
+          }
+          barDataUnsucc.sort((a, b) => {
+            const nameA = a.name;
+            const nameB = b.name;
+            return nameA.localeCompare(nameB);
+          });
+          if (otherDataUnsucc.x.length > 0) {
+            barDataUnsucc.push(otherDataUnsucc);
+          }
+
           let barLayout = {
             height: 500,
             margin: {
@@ -511,9 +679,9 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                 {
                   args: [
                     {
-                      x: barData.map(bar => bar.x),
-                      y: barData.map(bar => bar.y1),
-                      name: barData.map(bar => bar.name),
+                      x: barDataClients.map(bar => bar.x),
+                      y: barDataClients.map(bar => bar.y1),
+                      name: barDataClients.map(bar => bar.name),
                       type: 'scatter',
                       hovertemplate: '(%{x}, %{y:.3s})',
                     },
@@ -534,7 +702,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                     {
                       x: [Object.keys(hlls)],
                       y: clientsAllNetworks,
-                      name: Array(networksSorted.length).fill(""),
+                      name: Array(clientsAllNetworks.length).fill(""),
                       type: 'bar',
                       hovertemplate: '(%{x}, %{value:.3s})',
                     },
@@ -554,9 +722,9 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                 {
                   args: [
                     {
-                      x: barData.map(bar => bar.x).reverse(),
-                      y: barData.map(bar => bar.y2).reverse(),
-                      name: barData.map(bar => bar.name).reverse(),
+                      x: barDataBytes.map(bar => bar.x).reverse(),
+                      y: barDataBytes.map(bar => bar.y2).reverse(),
+                      name: barDataBytes.map(bar => bar.name).reverse(),
                       type: 'bar',
                       hovertemplate: '(%{x}, %{value:.3s})',
                     },
@@ -576,9 +744,9 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                 {
                   args: [
                     {
-                      x: barData.map(bar => bar.x).reverse(),
-                      y: barData.map(bar => bar.y3).reverse(),
-                      name: barData.map(bar => bar.name).reverse(),
+                      x: barDataTot.map(bar => bar.x).reverse(),
+                      y: barDataTot.map(bar => bar.y3).reverse(),
+                      name: barDataTot.map(bar => bar.name).reverse(),
                       type: 'bar',
                       hovertemplate: '(%{x}, %{value:.3s})',
                     },
@@ -598,9 +766,9 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                 {
                   args: [
                     {
-                      x: barData.map(bar => bar.x).reverse(),
-                      y: barData.map(bar => bar.y4).reverse(),
-                      name: barData.map(bar => bar.name).reverse(),
+                      x: barDataSucc.map(bar => bar.x).reverse(),
+                      y: barDataSucc.map(bar => bar.y4).reverse(),
+                      name: barDataSucc.map(bar => bar.name).reverse(),
                       type: 'bar',
                       hovertemplate: '(%{x}, %{value:.3s})',
                     },
@@ -620,9 +788,9 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                 {
                   args: [
                     {
-                      x: barData.map(bar => bar.x).reverse(),
-                      y: barData.map(bar => bar.y5).reverse(),
-                      name: barData.map(bar => bar.name).reverse(),
+                      x: barDataUnsucc.map(bar => bar.x).reverse(),
+                      y: barDataUnsucc.map(bar => bar.y5).reverse(),
+                      name: barDataUnsucc.map(bar => bar.name).reverse(),
                       type: 'bar',
                       hovertemplate: '(%{x}, %{value:.3s})',
                     },
@@ -649,7 +817,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
           else if (details === "month") {
             barLayout.xaxis["dtick"] = "M1";
           }
-          Plotly.newPlot(details+'-plots', barData.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: bar.type, hovertemplate: bar.hovertemplate})), barLayout, {displaylogo: false});
+          Plotly.newPlot(details+'-plots', barDataClients.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: bar.type, hovertemplate: bar.hovertemplate})), barLayout, {displaylogo: false});
         })
         .catch((error) => console.log(error));
     }
