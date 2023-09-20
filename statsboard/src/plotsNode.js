@@ -179,7 +179,22 @@ export function makePlotsNode(startTime, endTime, node) {
               sort: false
             };
             const pieLayoutBytes = {
-              title: 'Total number of bytes'
+              title: 'Total number of bytes',
+              annotations: [
+                {
+                  xshift: +10,
+                  y: -0.25,
+                  xref: 'paper',
+                  yref: 'paper',
+                  text: '<i>The above plot shows the amount of data delivered during<br>the use of EIDA services in the specified time period.<\i>',
+                  showarrow: false,
+                  font: {
+                    family: 'Arial',
+                    size: 12,
+                    color: 'black'
+                  }
+                }
+              ],
             };
             Plotly.newPlot('total-bytes', [pieDataBytes], pieLayoutBytes, {displaylogo: false});
 
@@ -198,6 +213,21 @@ export function makePlotsNode(startTime, endTime, node) {
             };
             const pieLayoutRequests = {
               title: 'Total number of requests',
+              annotations: [
+                {
+                  xshift: -20,
+                  y: -0.25,
+                  xref: 'paper',
+                  yref: 'paper',
+                  text: '<i>The above plot shows the number of total requests made to<br>the EIDA services in the specified time period.<\i>',
+                  showarrow: false,
+                  font: {
+                    family: 'Arial',
+                    size: 12,
+                    color: 'black'
+                  }
+                }
+              ],
               updatemenus: [{
                 buttons: [
                   // total requests button
@@ -209,7 +239,22 @@ export function makePlotsNode(startTime, endTime, node) {
                         sort: false
                       },
                       {
-                        title: 'Total number of requests'
+                        title: 'Total number of requests',
+                        annotations: [
+                          {
+                            xshift: -20,
+                            y: -0.25,
+                            xref: 'paper',
+                            yref: 'paper',
+                            text: '<i>The above plot shows the number of total requests made to<br>the EIDA services in the specified time period.<\i>',
+                            showarrow: false,
+                            font: {
+                              family: 'Arial',
+                              size: 12,
+                              color: 'black'
+                            }
+                          }
+                        ],
                       }
                     ],
                     label: 'Total Requests',
@@ -224,7 +269,22 @@ export function makePlotsNode(startTime, endTime, node) {
                         sort: false
                       },
                       {
-                        title: 'Total number of successful requests'
+                        title: 'Total number of successful requests',
+                        annotations: [
+                          {
+                            xshift: -20,
+                            y: -0.25,
+                            xref: 'paper',
+                            yref: 'paper',
+                            text: '<i>The above plot shows the number of successful requests made to<br>the EIDA services in the specified time period.<\i>',
+                            showarrow: false,
+                            font: {
+                              family: 'Arial',
+                              size: 12,
+                              color: 'black'
+                            }
+                          }
+                        ],
                       }
                     ],
                     label: 'Successful Requests',
@@ -239,7 +299,22 @@ export function makePlotsNode(startTime, endTime, node) {
                         sort: false
                       },
                       {
-                        title: 'Total number of unsuccessful requests'
+                        title: 'Total number of unsuccessful requests',
+                        annotations: [
+                          {
+                            xshift: -20,
+                            y: -0.25,
+                            xref: 'paper',
+                            yref: 'paper',
+                            text: '<i>The above plot shows the number of unsuccessful requests<br>(i.e. requests that did not return any data) made to<br>the EIDA services in the specified time period.<\i>',
+                            showarrow: false,
+                            font: {
+                              family: 'Arial',
+                              size: 12,
+                              color: 'black'
+                            }
+                          }
+                        ],
                       }
                     ],
                     label: 'Unsuccessful Requests',
@@ -333,13 +408,27 @@ export function makePlotsNode(startTime, endTime, node) {
                   b: 100
                 },
                 barmode: 'stack',
-                title: 'Number of users* per '+details,
+                title: 'Number of users per '+details,
+                annotations: [
+                  {
+                    y: -0.27,
+                    yref: 'paper',
+                    xref: 'paper',
+                    text: '<i>The above plot shows the number of unique users of EIDA services per month.<\i>',
+                    showarrow: false,
+                    font: {
+                      family: 'Arial',
+                      size: 12,
+                      color: 'black'
+                    }
+                  }
+                ],
                 xaxis: {
                   title: details.charAt(0).toUpperCase() + details.slice(1),
                   tickmode: 'linear'
                 },
                 yaxis: {
-                  title: 'Unique users*'
+                  title: 'Unique users'
                 },
                 showlegend: true,
                 updatemenus: [{
@@ -356,9 +445,23 @@ export function makePlotsNode(startTime, endTime, node) {
                           marker: Object.values(nodesColors).map(color => ({ color: color }))
                         },
                         {
-                          title: 'Number of users* per '+details,
+                          title: 'Number of users per '+details,
+                          annotations: [
+                            {
+                              y: -0.27,
+                              yref: 'paper',
+                              xref: 'paper',
+                              text: '<i>The above plot shows the number of unique users of EIDA services per month.<\i>',
+                              showarrow: false,
+                              font: {
+                                family: 'Arial',
+                                size: 12,
+                                color: 'black'
+                              }
+                            }
+                          ],
                           yaxis: {
-                            title: 'Unique users*'
+                            title: 'Unique users'
                           },
                           showlegend: true,
                         }
@@ -379,11 +482,24 @@ export function makePlotsNode(startTime, endTime, node) {
                         },
                         {
                           title: 'Number of unique users of all specified nodes per '+details,
+                          annotations: [
+                            {
+                              y: -0.27,
+                              yref: 'paper',
+                              xref: 'paper',
+                              text: '<i>The above plot shows the number of unique users of EIDA services per month.<\i>',
+                              showarrow: false,
+                              font: {
+                                family: 'Arial',
+                                size: 12,
+                                color: 'black'
+                              }
+                            }
+                          ],
                           yaxis: {
                             title: 'Unique Users'
                           },
                           showlegend: false,
-                          annotations: []
                         }
                       ],
                       label: 'Users All Nodes',
@@ -402,11 +518,24 @@ export function makePlotsNode(startTime, endTime, node) {
                         },
                         {
                           title: 'Number of bytes per '+details,
+                          annotations: [
+                            {
+                              y: -0.27,
+                              yref: 'paper',
+                              xref: 'paper',
+                              text: '<i>The above plot shows the amount of data delivered during the use of EIDA services per month.<\i>',
+                              showarrow: false,
+                              font: {
+                                family: 'Arial',
+                                size: 12,
+                                color: 'black'
+                              }
+                            }
+                          ],
                           yaxis: {
                             title: 'Bytes'
                           },
                           showlegend: true,
-                          annotations: []
                         }
                       ],
                       label: 'Bytes',
@@ -425,11 +554,24 @@ export function makePlotsNode(startTime, endTime, node) {
                         },
                         {
                           title: 'Number of total requests per '+details,
+                          annotations: [
+                            {
+                              y: -0.27,
+                              yref: 'paper',
+                              xref: 'paper',
+                              text: '<i>The above plot shows the number of total requests made to the EIDA services per month.<\i>',
+                              showarrow: false,
+                              font: {
+                                family: 'Arial',
+                                size: 12,
+                                color: 'black'
+                              }
+                            }
+                          ],
                           yaxis: {
                             title: 'Total Requests'
                           },
                           showlegend: true,
-                          annotations: []
                         }
                       ],
                       label: 'Total Requests',
@@ -448,11 +590,24 @@ export function makePlotsNode(startTime, endTime, node) {
                         },
                         {
                           title: 'Number of successful requests per '+details,
+                          annotations: [
+                            {
+                              y: -0.27,
+                              yref: 'paper',
+                              xref: 'paper',
+                              text: '<i>The above plot shows the number of successful requests made to the EIDA services per month.<\i>',
+                              showarrow: false,
+                              font: {
+                                family: 'Arial',
+                                size: 12,
+                                color: 'black'
+                              }
+                            }
+                          ],
                           yaxis: {
                             title: 'Successful Requests'
                           },
                           showlegend: true,
-                          annotations: []
                         }
                       ],
                       label: 'Successful Requests',
@@ -471,11 +626,24 @@ export function makePlotsNode(startTime, endTime, node) {
                         },
                         {
                           title: 'Number of unsuccessful requests per '+details,
+                          annotations: [
+                            {
+                              y: -0.27,
+                              yref: 'paper',
+                              xref: 'paper',
+                              text: '<i>The above plot shows the number of unsuccessful requests (i.e. requests that did not return any data) made to the EIDA services per month.<\i>',
+                              showarrow: false,
+                              font: {
+                                family: 'Arial',
+                                size: 12,
+                                color: 'black'
+                              }
+                            }
+                          ],
                           yaxis: {
                             title: 'Unsuccessful Requests'
                           },
                           showlegend: true,
-                          annotations: []
                         }
                       ],
                       label: 'Unsuccessful Requests',
@@ -563,6 +731,20 @@ export function makePlotsNode(startTime, endTime, node) {
               }];
               let mapLayout = {
                 title: 'Number of unique users per country',
+                annotations: [
+                  {
+                    y: -0.15,
+                    yref: 'paper',
+                    xref: 'paper',
+                    text: '<i>The above plot shows the number of unique users of EIDA services from each country.<\i>',
+                    showarrow: false,
+                    font: {
+                      family: 'Arial',
+                      size: 12,
+                      color: 'black'
+                    }
+                  }
+                ],
                 width: 1000,
                 mapbox: {
                   style: "open-street-map",
@@ -583,6 +765,20 @@ export function makePlotsNode(startTime, endTime, node) {
                         },
                         {
                           title: 'Number of unique users per country',
+                          annotations: [
+                            {
+                              y: -0.15,
+                              yref: 'paper',
+                              xref: 'paper',
+                              text: '<i>The above plot shows the number of unique users of EIDA services from each country.<\i>',
+                              showarrow: false,
+                              font: {
+                                family: 'Arial',
+                                size: 12,
+                                color: 'black'
+                              }
+                            }
+                          ],
                         }
                       ],
                       label: 'Unique Users',
@@ -600,6 +796,20 @@ export function makePlotsNode(startTime, endTime, node) {
                         },
                         {
                           title: 'Number of bytes per country',
+                          annotations: [
+                            {
+                              y: -0.15,
+                              yref: 'paper',
+                              xref: 'paper',
+                              text: '<i>The above plot shows the amount of data delivered to users of EIDA services from each country.<\i>',
+                              showarrow: false,
+                              font: {
+                                family: 'Arial',
+                                size: 12,
+                                color: 'black'
+                              }
+                            }
+                          ],
                         }
                       ],
                       label: 'Bytes',
@@ -617,6 +827,20 @@ export function makePlotsNode(startTime, endTime, node) {
                         },
                         {
                           title: 'Number of total requests per country',
+                          annotations: [
+                            {
+                              y: -0.15,
+                              yref: 'paper',
+                              xref: 'paper',
+                              text: '<i>The above plot shows the number of total requests made to the EIDA services from each country.<\i>',
+                              showarrow: false,
+                              font: {
+                                family: 'Arial',
+                                size: 12,
+                                color: 'black'
+                              }
+                            }
+                          ],
                         }
                       ],
                       label: 'Total Requests',
@@ -634,6 +858,20 @@ export function makePlotsNode(startTime, endTime, node) {
                         },
                         {
                           title: 'Number of successful requests per country',
+                          annotations: [
+                            {
+                              y: -0.15,
+                              yref: 'paper',
+                              xref: 'paper',
+                              text: '<i>The above plot shows the number of successful requests made to the EIDA services from each country.<\i>',
+                              showarrow: false,
+                              font: {
+                                family: 'Arial',
+                                size: 12,
+                                color: 'black'
+                              }
+                            }
+                          ],
                         }
                       ],
                       label: 'Successful Requests',
@@ -651,6 +889,20 @@ export function makePlotsNode(startTime, endTime, node) {
                         },
                         {
                           title: 'Number of unsuccessful requests per country',
+                          annotations: [
+                            {
+                              y: -0.15,
+                              yref: 'paper',
+                              xref: 'paper',
+                              text: '<i>The above plot shows the number of unsuccesssful requests (i.e. requests that did not return any data) made to the EIDA services from each country.<\i>',
+                              showarrow: false,
+                              font: {
+                                family: 'Arial',
+                                size: 12,
+                                color: 'black'
+                              }
+                            }
+                          ],
                         }
                       ],
                       label: 'Unsuccessful Requests',

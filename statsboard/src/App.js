@@ -23,7 +23,7 @@ import { makePlotsStation } from './plotsStation.js';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authTokenFile, setAuthTokenFile] = useState(undefined);
-  const [startTime, setStartTime] = useState(undefined);
+  const [startTime, setStartTime] = useState(new Date().getFullYear()+'-01');
   const [endTime, setEndTime] = useState(undefined);
   const [level, setLevel] = useState("eida");
   const [showError, setShowError] = useState("");
@@ -62,7 +62,7 @@ function App() {
     }
     // show error and stop execution if start time not specified by user
     if (!startTime) {
-      setShowError("Specify at least 'Start time' parameter!");
+      setShowError("Specify at least 'Start Time' parameter!");
       return;
     }
     // otherwise clear error message
@@ -204,14 +204,22 @@ function App() {
     }
   }, [openNet]);
 
+  // default plots when page loads: eida level current year
+  useEffect(() => {
+    handleClick();
+  }, []);
+
   return (
     <div className="App">
       <Grid id="form-container" container spacing={2}>
         <Grid id="form-left" item xs={5}>
           <h1>EIDA Statistics Dashboard</h1>
           <div className="info">
-            Dashboard UI to explore <a href="http://www.orfeus-eu.org/data/eida/">EIDA</a> usage statistics in the form of plots.<br></br>
-            For more details, visit the <a href="https://ws.resif.fr/eidaws/statistics/1/">statistics webservice.</a>
+            Dashboard UI to explore usage statistics in the form of plots for services distributed in the <a href="http://www.orfeus-eu.org/data/eida/">EIDA</a> federation.<br></br>
+            For more details, visit the <a href="https://ws.resif.fr/eidaws/statistics/1/">statistics webservice</a>.<br></br>
+            The code of the current dashboard is hosted at <a href="https://github.com/EIDA/statsboard">github</a>.<br></br>
+            The starting date of collecting statistics data is 2020-11.<br></br>
+            For members of EIDA federation, choose the authentication below for full access to data.
           </div>
           <div>
             <FormControlLabel control={<Checkbox checked={isAuthenticated} onChange={() => {setIsAuthenticated(!isAuthenticated); setAuthTokenFile(undefined);

@@ -183,7 +183,22 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
           sort: false
         };
         const pieLayoutBytes = {
-          title: 'Total number of bytes'
+          title: 'Total number of bytes',
+          annotations: [
+            {
+              xshift: +10,
+              y: -0.25,
+              xref: 'paper',
+              yref: 'paper',
+              text: '<i>The above plot shows the amount of data delivered during<br>the use of EIDA services in the specified time period.<\i>',
+              showarrow: false,
+              font: {
+                family: 'Arial',
+                size: 12,
+                color: 'black'
+              }
+            }
+          ],
         };
         Plotly.newPlot('total-bytes', [pieDataBytes], pieLayoutBytes, {displaylogo: false});
 
@@ -219,6 +234,20 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
         };
         const pieLayoutRequests = {
           title: 'Total number of requests',
+          annotations: [
+            {
+              y: -0.25,
+              xref: 'paper',
+              yref: 'paper',
+              text: '<i>The above plot shows the number of requests made to<br>the EIDA services in the specified time period.<\i>',
+              showarrow: false,
+              font: {
+                family: 'Arial',
+                size: 12,
+                color: 'black'
+              }
+            }
+          ],
         };
         Plotly.newPlot('total-requests', [pieDataRequests], pieLayoutRequests, {displaylogo: false});
       })
@@ -399,13 +428,27 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
               b: 100
             },
             barmode: 'stack',
-            title: 'Number of unique users* per '+details,
+            title: 'Number of unique users per '+details,
+            annotations: [
+              {
+                y: -0.27,
+                yref: 'paper',
+                xref: 'paper',
+                text: '<i>The above plot shows the number of unique users of EIDA services per month.<\i>',
+                showarrow: false,
+                font: {
+                  family: 'Arial',
+                  size: 12,
+                  color: 'black'
+                }
+              }
+            ],
             xaxis: {
               title: details.charAt(0).toUpperCase() + details.slice(1),
               tickmode: 'linear'
             },
             yaxis: {
-              title: 'Unique users*'
+              title: 'Unique users'
             },
             showlegend: true,
             updatemenus: [{
@@ -421,9 +464,23 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
                       hovertemplate: '(%{x}, %{y:.3s})',
                     },
                     {
-                      title: 'Number of unique users* per '+details,
+                      title: 'Number of unique users per '+details,
+                      annotations: [
+                        {
+                          y: -0.27,
+                          yref: 'paper',
+                          xref: 'paper',
+                          text: '<i>The above plot shows the number of unique users of EIDA services per month.<\i>',
+                          showarrow: false,
+                          font: {
+                            family: 'Arial',
+                            size: 12,
+                            color: 'black'
+                          }
+                        }
+                      ],
                       yaxis: {
-                        title: 'Unique users*'
+                        title: 'Unique users'
                       },
                       showlegend: true,
                     }
@@ -443,11 +500,24 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
                     },
                     {
                       title: 'Number of unique users of all specified stations per '+details,
+                      annotations: [
+                        {
+                          y: -0.27,
+                          yref: 'paper',
+                          xref: 'paper',
+                          text: '<i>The above plot shows the number of unique users of EIDA services per month.<\i>',
+                          showarrow: false,
+                          font: {
+                            family: 'Arial',
+                            size: 12,
+                            color: 'black'
+                          }
+                        }
+                      ],
                       yaxis: {
                         title: 'Unique Users'
                       },
                       showlegend: false,
-                      annotations: []
                     }
                   ],
                   label: 'Unique Users All Stations',
@@ -465,11 +535,24 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
                     },
                     {
                       title: 'Number of bytes per '+details,
+                      annotations: [
+                        {
+                          y: -0.27,
+                          yref: 'paper',
+                          xref: 'paper',
+                          text: '<i>The above plot shows the amount of data delivered during the use of EIDA services per month.<\i>',
+                          showarrow: false,
+                          font: {
+                            family: 'Arial',
+                            size: 12,
+                            color: 'black'
+                          }
+                        }
+                      ],
                       yaxis: {
                         title: 'Bytes'
                       },
                       showlegend: true,
-                      annotations: []
                     }
                   ],
                   label: 'Bytes',
@@ -487,11 +570,24 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
                     },
                     {
                       title: 'Number of requests per '+details,
+                      annotations: [
+                        {
+                          y: -0.27,
+                          yref: 'paper',
+                          xref: 'paper',
+                          text: '<i>The above plot shows the number of requests made to the EIDA services per month.<\i>',
+                          showarrow: false,
+                          font: {
+                            family: 'Arial',
+                            size: 12,
+                            color: 'black'
+                          }
+                        }
+                      ],
                       yaxis: {
                         title: 'Requests'
                       },
                       showlegend: true,
-                      annotations: []
                     }
                   ],
                   label: 'Requests',
@@ -571,6 +667,20 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
           }];
           let mapLayout = {
             title: 'Number of unique users per country',
+            annotations: [
+              {
+                y: -0.15,
+                yref: 'paper',
+                xref: 'paper',
+                text: '<i>The above plot shows the number of unique users of EIDA services from each country.<\i>',
+                showarrow: false,
+                font: {
+                  family: 'Arial',
+                  size: 12,
+                  color: 'black'
+                }
+              }
+            ],
             width: 1000,
             mapbox: {
               style: "open-street-map",
@@ -591,6 +701,20 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
                     },
                     {
                       title: 'Number of unique users per country',
+                      annotations: [
+                        {
+                          y: -0.15,
+                          yref: 'paper',
+                          xref: 'paper',
+                          text: '<i>The above plot shows the number of unique users of EIDA services from each country.<\i>',
+                          showarrow: false,
+                          font: {
+                            family: 'Arial',
+                            size: 12,
+                            color: 'black'
+                          }
+                        }
+                      ],
                     }
                   ],
                   label: 'Unique Users',
@@ -608,6 +732,20 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
                     },
                     {
                       title: 'Number of bytes per country',
+                      annotations: [
+                        {
+                          y: -0.15,
+                          yref: 'paper',
+                          xref: 'paper',
+                          text: '<i>The above plot shows the amount of data delivered to users of EIDA services from each country.<\i>',
+                          showarrow: false,
+                          font: {
+                            family: 'Arial',
+                            size: 12,
+                            color: 'black'
+                          }
+                        }
+                      ],
                     }
                   ],
                   label: 'Bytes',
@@ -625,6 +763,20 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
                     },
                     {
                       title: 'Number of requests per country',
+                      annotations: [
+                        {
+                          y: -0.15,
+                          yref: 'paper',
+                          xref: 'paper',
+                          text: '<i>The above plot shows the number of requests made to the EIDA services from each country.<\i>',
+                          showarrow: false,
+                          font: {
+                            family: 'Arial',
+                            size: 12,
+                            color: 'black'
+                          }
+                        }
+                      ],
                     }
                   ],
                   label: 'Requests',
