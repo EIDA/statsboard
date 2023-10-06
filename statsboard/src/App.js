@@ -245,14 +245,14 @@ function App() {
         <Grid item xs={5} mt={2}>
           <div>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker label="Start Time" sx={{ my: 1 }} views={['year', 'month']} slotProps={{ textField: { size: 'small' } }} onChange={
-                (newValue) => (newValue ? setStartTime(newValue.$y+'-'+(newValue.$M+1)) : setStartTime(undefined))} />
+              <DatePicker label="Start Time" sx={{ my: 1 }} views={['year', 'month']} slotProps={{ textField: { size: 'small' } }} format="MM-YYYY"
+                onChange={(newValue) => (newValue ? setStartTime(newValue.$y+'-'+(newValue.$M+1)) : setStartTime(undefined))} />
             </LocalizationProvider>
           </div>
           <div>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker label="End Time" sx={{ my: 1 }} views={['year', 'month']} slotProps={{ textField: { size: 'small' } }} onChange={
-                (newValue) => (newValue ? setEndTime(newValue.$y+'-'+(newValue.$M+1)) : setEndTime(undefined))} />
+              <DatePicker label="End Time" sx={{ my: 1 }} views={['year', 'month']} slotProps={{ textField: { size: 'small' } }} format="MM-YYYY"
+                onChange={(newValue) => (newValue ? setEndTime(newValue.$y+'-'+(newValue.$M+1)) : setEndTime(undefined))} />
             </LocalizationProvider>
           </div>
           <div>
