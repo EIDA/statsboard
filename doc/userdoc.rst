@@ -71,7 +71,15 @@ Deployment
 
 Use the appropriate commands of npm to deploy either locally or in a server. ::
 
-  $ npm start or npm run build or npm run deploy
+  $ npm start
+
+OR ::
+
+  $ npm run build
+
+OR ::
+
+  $ npm run deploy
 
 
 Using the Service
