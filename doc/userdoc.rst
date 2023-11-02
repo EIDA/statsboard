@@ -1,8 +1,5 @@
-User documentation
-##################
-
 Summary
-=======
+#######
 
 One of the aims of the
 `European Integrated Data Archive <https://www.orfeus-eu.org/data/eida/>`_
@@ -30,7 +27,7 @@ operators of which have chosen to restrict from being public.
 
 
 Installation
-============
+############
 
 The service is not intended to be deployed at each node, but rather be used
 from its dedicated web page. However, for the sake of completeness,
@@ -38,7 +35,7 @@ should anyone wish to use or deploy either locally or in a server
 the current service, they can follow the instructions below.
 
 License
--------
+=======
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -54,21 +51,21 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see http://www.gnu.org/licenses/.
 
 Requirements
-------------
+============
 
  * Node.js (version >= 18.0.0)
 
  * npm (version >= 9.0.0)
 
 Download
---------
+========
 
 Download from GitHub. ::
 
  $ git clone https://github.com/EIDA/statsboard.git
 
 Installation
-------------
+============
 
 Move into the statsboard folder of the project and install the necessary libraries. ::
 
@@ -76,7 +73,7 @@ Move into the statsboard folder of the project and install the necessary librari
   $ npm install
 
 Deployment
-----------
+==========
 
 Use the appropriate commands of npm to use or deploy either locally or in a server. ::
 
@@ -92,14 +89,14 @@ OR ::
 
 
 Using the Service
-=================
+#################
 
 As mentioned above, the service can be used by anyone from its dedicated
 web page, currently hosted at
 `Statsboard Web Page <https://orfeus-eu.org/data/eida/stats/>`_.
 
 Page Description
-----------------
+================
 
 When loaded, the page consists of text and some HTML elements, which the user is
 supposed to use to choose what data they wish to visualize. These elements
@@ -115,8 +112,8 @@ are the following:
 
 * A Level radio box: users can get visualized statistics information
   on EIDA, Node or Network level, that is information for the whole EIDA
-  organization, for each node of the selected nodes within EIDA organization or
-  for each network of the selected networks within EIDA organization. If the
+  federation, for each node of the selected nodes within EIDA federation or
+  for each network of the selected networks within EIDA federation. If the
   user is authenticated, Station level is also an option.
 
 * Node, Network and Station input fields according to the Level specified: if the
@@ -147,8 +144,44 @@ are the following:
   made. These are for EIDA Level from the start of current year until last month.
 
 Authentication
---------------
+==============
 
+As previously mentioned, users that are members of the EIDA federation can choose
+to authenticate themselves before they request data. To do so, they need to check
+the "Authentication" checkbox and upload their token file, which they can acquire
+from the `EIDA Authentication System <https://geofon.gfz-potsdam.de/eas/>`_.
+
+Authenticated users may be able to see statistics information for restricted,
+networks, that is networks the operators of which have chosen to restrict
+from being public. Networks' operators are the ones that choose to which
+authenticated users their networks will be visible or not. Also, nodes' operators
+meet no restrictions whatsoever, if they are authenticated when using the service.
 
 Plots Description
------------------
+=================
+
+Whenever the "MAKE PLOTS" button is clicked, 4 requests are sent to the Statistcs
+web service in order to gather the data which will be used to make 4 groups of plots.
+Each group shows information about the number of unique users of the FDSN dataselect
+service, the number of bytes transferred to fulfill requests that are made to the
+FDSN dataselect service and the number of requests made to the FDSN dataselect
+service with distinguishing the latter as successful (those that returned data)
+or unsuccessful (those that didn't return any data). The 4 groups are the following:
+
+* 1st group of pies or indicators: the 1st group of plots show the number of unique
+  users, bytes, requests regarding the whole period specified by the user in the
+  "Start Time" and "End Time" input fields. These plots are mostly presented in pies,
+  where each slice represents a node/network/station. For EIDA level, just an indicator
+  is enough.
+
+* 2nd group of line plots and bar plots: the 2nd group shows the same information as
+  the 1st group, but it does so per month of the specified time period. Unique users are
+  depicted in line plot. Other metrics are depicted in stacked bar plots, where each stack
+  represents a node/network/station.
+
+* 3rd group of line plots and bar plots: the 3rd group of plots is the same as the 2nd,
+  but shows information per year, instead of month, of the specified time period.
+
+* 4th group of map plots: the 4th group shows the same information as all plots,
+  that is unique users, bytes, requests, but does so per country from which
+  requests to FDSN dataselect service were made.
