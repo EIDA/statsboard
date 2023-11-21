@@ -1,5 +1,5 @@
-Statistics Board documentation
-#############################
+Statistics Board Documentation
+##############################
 
 .. toctree::
     :maxdepth: 2
@@ -7,4 +7,3 @@ Statistics Board documentation
     :titlesonly:
 
     userdoc
-    specification
