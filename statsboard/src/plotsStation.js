@@ -307,6 +307,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
                 y3: stationResults.map(result => result.nb_reqs),
                 name: stationResults[0].network + '.' + stationResults[0].station,
                 type: 'scatter',
+                mode: 'lines+markers',
                 hovertemplate: '(%{x}, %{y:.3s})',
               }
           });
@@ -322,6 +323,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
             y1: {},
             name: 'Grouped Items',
             type: 'scatter',
+            mode: 'lines+markers',
             hovertemplate: '(%{x}, %{y:.3s})',
           };
           let barDataClients = [...barData];
@@ -604,7 +606,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
           else if (details === "month") {
             barLayout.xaxis["dtick"] = "M1";
           }
-          Plotly.newPlot(details+'-plots', barDataClients.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: bar.type, hovertemplate: bar.hovertemplate})), barLayout, {displaylogo: false});
+          Plotly.newPlot(details+'-plots', barDataClients.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: bar.type, mode: bar.mode, hovertemplate: bar.hovertemplate})), barLayout, {displaylogo: false});
         })
         .catch((error) => console.log(error));
     }

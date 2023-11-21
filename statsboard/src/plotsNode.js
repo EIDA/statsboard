@@ -396,6 +396,7 @@ export function makePlotsNode(startTime, endTime, node) {
                     y5: nodeResults.map(result => result.nb_reqs - result.nb_successful_reqs),
                     name: node,
                     type: 'scatter',
+                    mode: 'lines+markers',
                     hovertemplate: '(%{x}, %{y:.3s})',
                     marker: {
                       color: nodesColors[node]
@@ -660,7 +661,7 @@ export function makePlotsNode(startTime, endTime, node) {
               else if (details === "month") {
                 barLayout.xaxis["dtick"] = "M1";
               }
-              Plotly.newPlot(details+'-plots', barData.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: bar.type, marker: bar.marker, hovertemplate: bar.hovertemplate})), barLayout, {displaylogo: false});
+              Plotly.newPlot(details+'-plots', barData.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: bar.type, mode: bar.mode, marker: bar.marker, hovertemplate: bar.hovertemplate})), barLayout, {displaylogo: false});
             })
             .catch((error) => console.log(error));
         }
