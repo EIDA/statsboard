@@ -244,114 +244,57 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
           const index = accumulator.networks.indexOf(network);
           if (index !== -1) {
             accumulator.nb_reqs[index] += result.nb_reqs;
-            accumulator.nb_successful_reqs[index] += result.nb_successful_reqs;
           } else {
             accumulator.nb_reqs.push(result.nb_reqs);
-            accumulator.nb_successful_reqs.push(result.nb_successful_reqs);
             accumulator.networks.push(single ? `${net} (${network})` : network);
           }
           return accumulator;
-        }, { nb_reqs: [], nb_successful_reqs: [], networks: [] });
-        // show topN items and group the rest for total requests
-        let groupedDataTot = { values: [], labels: [], belongsInLess: [] };
-        let otherValueTot = 0;
-        const sortedNetsTot = sharedReq.networks.map((network, index) => ({
+        }, { nb_reqs: [], networks: [] });
+        // show topN items and group the rest
+        let groupedDataReq = { values: [], labels: [], belongsInLess: [] };
+        let otherValueReq = 0;
+        const sortedNetsReq = sharedReq.networks.map((network, index) => ({
           network,
           nb_reqs: sharedReq.nb_reqs[index]
         })).sort((a, b) => b.nb_reqs - a.nb_reqs);
-        sortedNetsTot.forEach(({ network, nb_reqs }, index) => {
+        sortedNetsReq.forEach(({ network, nb_reqs }, index) => {
           if (index < topN) {
-            groupedDataTot.values.push(nb_reqs);
-            groupedDataTot.labels.push(single ? `${net} (${network})` : network);
+            groupedDataReq.values.push(nb_reqs);
+            groupedDataReq.labels.push(single ? `${net} (${network})` : network);
           } else {
-            groupedDataTot.belongsInLess.push(network);
-            otherValueTot += nb_reqs;
+            groupedDataReq.belongsInLess.push(network);
+            otherValueReq += nb_reqs;
           }
         });
         // sort alphabetically
-        const sortedDataTot = groupedDataTot.labels.map((label, index) => ({
+        const sortedDataReq = groupedDataReq.labels.map((label, index) => ({
           label,
-          value: groupedDataTot.values[index]
+          value: groupedDataReq.values[index]
         })).sort((a, b) => a.label.localeCompare(b.label));
-        groupedDataTot.labels = sortedDataTot.map(item => item.label);
-        groupedDataTot.values = sortedDataTot.map(item => item.value);
-        if (otherValueTot > 0) {
-          groupedDataTot.values.push(otherValueTot);
-          groupedDataTot.labels.push('Grouped Items');
+        groupedDataReq.labels = sortedDataReq.map(item => item.label);
+        groupedDataReq.values = sortedDataReq.map(item => item.value);
+        if (otherValueReq > 0) {
+          groupedDataReq.values.push(otherValueReq);
+          groupedDataReq.labels.push('Grouped Items');
         }
-        // show topN items and group the rest for successful requests
-        let groupedDataSucc = { values: [], labels: [], belongsInLess: [] };
-        let otherValueSucc = 0;
-        const sortedNetsSucc = sharedReq.networks.map((network, index) => ({
-          network,
-          nb_successful_reqs: sharedReq.nb_successful_reqs[index]
-        })).sort((a, b) => b.nb_successful_reqs - a.nb_successful_reqs);
-        sortedNetsSucc.forEach(({ network, nb_successful_reqs }, index) => {
-          if (index < topN) {
-            groupedDataSucc.values.push(nb_successful_reqs);
-            groupedDataSucc.labels.push(single ? `${net} (${network})` : network);
-          } else {
-            groupedDataSucc.belongsInLess.push(network);
-            otherValueSucc += nb_successful_reqs;
-          }
-        });
-        // sort alphabetically
-        const sortedDataSucc = groupedDataSucc.labels.map((label, index) => ({
-          label,
-          value: groupedDataSucc.values[index]
-        })).sort((a, b) => a.label.localeCompare(b.label));
-        groupedDataSucc.labels = sortedDataSucc.map(item => item.label);
-        groupedDataSucc.values = sortedDataSucc.map(item => item.value);
-        if (otherValueSucc > 0) {
-          groupedDataSucc.values.push(otherValueSucc);
-          groupedDataSucc.labels.push('Grouped Items');
-        }
-        // show topN items and group the rest for unsuccessful requests
-        let groupedDataUnsucc = { values: [], labels: [], belongsInLess: [] };
-        let otherValueUnsucc = 0;
-        const sortedNetsUnsucc = sharedReq.networks.map((network, index) => ({
-          network,
-          nb_unsuccessful_reqs: sharedReq.nb_reqs[index] - sharedReq.nb_successful_reqs[index]
-        })).sort((a, b) => b.nb_unsuccessful_reqs - a.nb_unsuccessful_reqs);
-        sortedNetsUnsucc.forEach(({ network, nb_unsuccessful_reqs }, index) => {
-          if (index < topN) {
-            groupedDataUnsucc.values.push(nb_unsuccessful_reqs);
-            groupedDataUnsucc.labels.push(single ? `${net} (${network})` : network);
-          } else {
-            groupedDataUnsucc.belongsInLess.push(network);
-            otherValueUnsucc += nb_unsuccessful_reqs;
-          }
-        });
-        // sort alphabetically
-        const sortedDataUnsucc = groupedDataUnsucc.labels.map((label, index) => ({
-          label,
-          value: groupedDataUnsucc.values[index]
-        })).sort((a, b) => a.label.localeCompare(b.label));
-        groupedDataUnsucc.labels = sortedDataUnsucc.map(item => item.label);
-        groupedDataUnsucc.values = sortedDataUnsucc.map(item => item.value);
-        if (otherValueUnsucc > 0) {
-          groupedDataUnsucc.values.push(otherValueUnsucc);
-          groupedDataUnsucc.labels.push('Grouped Items');
-        }
-        // show total requests at first
         const pieDataRequests = {
-          values: groupedDataTot.values,
-          labels: groupedDataTot.labels,
+          values: groupedDataReq.values,
+          labels: groupedDataReq.labels,
           type: 'pie',
           texttemplate: '%{value:.3s}',
           hovertemplate: '%{label}<br>%{value:.3s}<br>%{percent}<extra>%{customdata}</extra>',
-          customdata: groupedDataTot.labels.map(label => label === 'Grouped Items' ? groupedDataTot.belongsInLess.join('<br>') : ''),
+          customdata: groupedDataReq.labels.map(label => label === 'Grouped Items' ? groupedDataReq.belongsInLess.join('<br>') : ''),
           sort: false
         };
         const pieLayoutRequests = {
           title: 'Total number of requests',
           annotations: [
             {
-              xshift: -20,
+              xshift: +10,
               y: -0.25,
               xref: 'paper',
               yref: 'paper',
-              text: '<i>The above plot shows the number of total requests made to<br>the EIDA services in the specified time period.<\i>',
+              text: '<i>The above plot shows the number of requests made to<br>the EIDA services in the specified time period.<\i>',
               showarrow: false,
               font: {
                 family: 'Arial',
@@ -359,109 +302,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                 color: 'black'
               }
             }
-          ],
-          updatemenus: [{
-            buttons: [
-              // total requests button
-              {
-                args: [
-                  {
-                    values: [groupedDataTot.values],
-                    labels: [groupedDataTot.labels],
-                    customdata: [groupedDataTot.labels.map(label => label === 'Grouped Items' ? groupedDataTot.belongsInLess.join('<br>') : '')],
-                    type: 'pie',
-                    sort: false
-                  },
-                  {
-                    title: 'Total number of requests',
-                    annotations: [
-                      {
-                        xshift: -20,
-                        y: -0.25,
-                        xref: 'paper',
-                        yref: 'paper',
-                        text: '<i>The above plot shows the number of total requests made to<br>the EIDA services in the specified time period.<\i>',
-                        showarrow: false,
-                        font: {
-                          family: 'Arial',
-                          size: 12,
-                          color: 'black'
-                        }
-                      }
-                    ],
-                  }
-                ],
-                label: 'Total Requests',
-                method: 'update'
-              },
-              // successful requests button
-              {
-                args: [
-                  {
-                    values: [groupedDataSucc.values],
-                    labels: [groupedDataSucc.labels],
-                    customdata: [groupedDataSucc.labels.map(label => label === 'Grouped Items' ? groupedDataSucc.belongsInLess.join('<br>') : '')],
-                    type: 'pie',
-                    sort: false
-                  },
-                  {
-                    title: 'Total number of successful requests',
-                    annotations: [
-                      {
-                        xshift: -20,
-                        y: -0.25,
-                        xref: 'paper',
-                        yref: 'paper',
-                        text: '<i>The above plot shows the number of successful requests made to<br>the EIDA services in the specified time period.<\i>',
-                        showarrow: false,
-                        font: {
-                          family: 'Arial',
-                          size: 12,
-                          color: 'black'
-                        }
-                      }
-                    ],
-                  }
-                ],
-                label: 'Successful Requests',
-                method: 'update'
-              },
-              // unsuccessful requests button
-              {
-                args: [
-                  {
-                    values: [groupedDataUnsucc.values],
-                    labels: [groupedDataUnsucc.labels],
-                    customdata: [groupedDataUnsucc.labels.map(label => label === 'Grouped Items' ? groupedDataUnsucc.belongsInLess.join('<br>') : '')],
-                    type: 'pie',
-                    sort: false
-                  },
-                  {
-                    title: 'Total number of unsuccessful requests',
-                    annotations: [
-                      {
-                        xshift: -20,
-                        y: -0.25,
-                        xref: 'paper',
-                        yref: 'paper',
-                        text: '<i>The above plot shows the number of unsuccessful requests<br>(i.e. requests that did not return any data) made to<br>the EIDA services in the specified time period.<\i>',
-                        showarrow: false,
-                        font: {
-                          family: 'Arial',
-                          size: 12,
-                          color: 'black'
-                        }
-                      }
-                    ],
-                  }
-                ],
-                label: 'Unsuccessful Requests',
-                method: 'update'
-              }
-            ],
-            direction: 'down',
-            type: 'buttons'
-          }]
+          ]
         };
         Plotly.newPlot('total-requests', [pieDataRequests], pieLayoutRequests, {displaylogo: false});
       })
@@ -533,17 +374,13 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
               const y1 = results.reduce((acc, result) => acc.union(fromHexString(result.hll_clients).hllSet), new HLL(11, 5));
               const y2 = results.reduce((sum, result) => sum + result.bytes, 0);
               const y3 = results.reduce((sum, result) => sum + result.nb_reqs, 0);
-              const y4 = results.reduce((sum, result) => sum + result.nb_successful_reqs, 0);
-              const y5 = results.reduce((sum, result) => sum + (result.nb_reqs - result.nb_successful_reqs), 0);
-              return {date, y1, y2, y3, y4, y5};
+              return {date, y1, y2, y3};
             });
             return {
               x: aggregatedResults.map(result => result.date),
               y1: aggregatedResults.map(result => result.y1.cardinality()),
               y2: aggregatedResults.map(result => result.y2),
               y3: aggregatedResults.map(result => result.y3),
-              y4: aggregatedResults.map(result => result.y4),
-              y5: aggregatedResults.map(result => result.y5),
               name: single ? `${net} (${network})` : (network ? network : "N/A"),
               type: 'scatter',
               mode: 'lines+markers',
@@ -627,112 +464,40 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
             barDataBytes.push(otherDataBytes);
           }
 
-          // show topN items and group the rest for total requests
+          // show topN items and group the rest for requests
           barData.sort((a, b) => {
             const totalA = a.y3.reduce((sum, value) => sum + value, 0);
             const totalB = b.y3.reduce((sum, value) => sum + value, 0);
             return totalB - totalA;
           });
-          let otherDataTot = {
+          let otherDataReq = {
             x: [],
             y3: {},
             name: 'Grouped Items',
             type: 'scatter',
             hovertemplate: '(%{x}, %{y:.3s})',
           };
-          let barDataTot = [...barData];
-          if (barDataTot.length > topN) {
-            for (let i = topN; i < barDataTot.length; i++) {
-              const item = barDataTot[i];
+          let barDataReq = [...barData];
+          if (barDataReq.length > topN) {
+            for (let i = topN; i < barDataReq.length; i++) {
+              const item = barDataReq[i];
               item.x.forEach((date, i) => {
-                if (!otherDataTot.x.includes(date)) {
-                  otherDataTot.x.push(date);
+                if (!otherDataReq.x.includes(date)) {
+                  otherDataReq.x.push(date);
                 }
-                otherDataTot.y3[date] = (otherDataTot.y3[date] || 0) + item.y3[i];
+                otherDataReq.y3[date] = (otherDataReq.y3[date] || 0) + item.y3[i];
               });
             }
-            otherDataTot.y3 = Object.values(otherDataTot.y3);
-            barDataTot.splice(topN, barDataTot.length - topN);
+            otherDataReq.y3 = Object.values(otherDataReq.y3);
+            barDataReq.splice(topN, barDataReq.length - topN);
           }
-          barDataTot.sort((a, b) => {
+          barDataReq.sort((a, b) => {
             const nameA = a.name;
             const nameB = b.name;
             return nameA.localeCompare(nameB);
           });
-          if (otherDataTot.x.length > 0) {
-            barDataTot.push(otherDataTot);
-          }
-
-          // show topN items and group the rest for successful requests
-          barData.sort((a, b) => {
-            const totalA = a.y4.reduce((sum, value) => sum + value, 0);
-            const totalB = b.y4.reduce((sum, value) => sum + value, 0);
-            return totalB - totalA;
-          });
-          let otherDataSucc = {
-            x: [],
-            y4: {},
-            name: 'Grouped Items',
-            type: 'scatter',
-            hovertemplate: '(%{x}, %{y:.3s})',
-          };
-          let barDataSucc = [...barData];
-          if (barDataSucc.length > topN) {
-            for (let i = topN; i < barDataSucc.length; i++) {
-              const item = barDataSucc[i];
-              item.x.forEach((date, i) => {
-                if (!otherDataSucc.x.includes(date)) {
-                  otherDataSucc.x.push(date);
-                }
-                otherDataSucc.y4[date] = (otherDataSucc.y4[date] || 0) + item.y4[i];
-              });
-            }
-            otherDataSucc.y4 = Object.values(otherDataSucc.y4);
-            barDataSucc.splice(topN, barDataSucc.length - topN);
-          }
-          barDataSucc.sort((a, b) => {
-            const nameA = a.name;
-            const nameB = b.name;
-            return nameA.localeCompare(nameB);
-          });
-          if (otherDataSucc.x.length > 0) {
-            barDataSucc.push(otherDataSucc);
-          }
-
-          // show topN items and group the rest for unsuccessful requests
-          barData.sort((a, b) => {
-            const totalA = a.y5.reduce((sum, value) => sum + value, 0);
-            const totalB = b.y5.reduce((sum, value) => sum + value, 0);
-            return totalB - totalA;
-          });
-          let otherDataUnsucc = {
-            x: [],
-            y5: {},
-            name: 'Grouped Items',
-            type: 'scatter',
-            hovertemplate: '(%{x}, %{y:.3s})',
-          };
-          let barDataUnsucc = [...barData];
-          if (barDataUnsucc.length > topN) {
-            for (let i = topN; i < barDataUnsucc.length; i++) {
-              const item = barDataUnsucc[i];
-              item.x.forEach((date, i) => {
-                if (!otherDataUnsucc.x.includes(date)) {
-                  otherDataUnsucc.x.push(date);
-                }
-                otherDataUnsucc.y5[date] = (otherDataUnsucc.y5[date] || 0) + item.y5[i];
-              });
-            }
-            otherDataUnsucc.y5 = Object.values(otherDataUnsucc.y5);
-            barDataUnsucc.splice(topN, barDataUnsucc.length - topN);
-          }
-          barDataUnsucc.sort((a, b) => {
-            const nameA = a.name;
-            const nameB = b.name;
-            return nameA.localeCompare(nameB);
-          });
-          if (otherDataUnsucc.x.length > 0) {
-            barDataUnsucc.push(otherDataUnsucc);
+          if (otherDataReq.x.length > 0) {
+            barDataReq.push(otherDataReq);
           }
 
           let barLayout = {
@@ -871,24 +636,24 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                   label: 'Bytes',
                   method: 'update'
                 },
-                // total requests button
+                // requests button
                 {
                   args: [
                     {
-                      x: barDataTot.map(bar => bar.x).reverse(),
-                      y: barDataTot.map(bar => bar.y3).reverse(),
-                      name: barDataTot.map(bar => bar.name).reverse(),
+                      x: barDataReq.map(bar => bar.x).reverse(),
+                      y: barDataReq.map(bar => bar.y3).reverse(),
+                      name: barDataReq.map(bar => bar.name).reverse(),
                       type: 'bar',
                       hovertemplate: '(%{x}, %{value:.3s})',
                     },
                     {
-                      title: 'Number of total requests per '+details,
+                      title: 'Number of requests per '+details,
                       annotations: [
                         {
                           y: -0.27,
                           yref: 'paper',
                           xref: 'paper',
-                          text: '<i>The above plot shows the number of total requests made to the EIDA services per month.<\i>',
+                          text: '<i>The above plot shows the number of requests made to the EIDA services per month.<\i>',
                           showarrow: false,
                           font: {
                             family: 'Arial',
@@ -898,82 +663,12 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                         }
                       ],
                       yaxis: {
-                        title: 'Total Requests'
+                        title: 'Requests'
                       },
                       showlegend: true,
                     }
                   ],
-                  label: 'Total Requests',
-                  method: 'update'
-                },
-                // successful requests button
-                {
-                  args: [
-                    {
-                      x: barDataSucc.map(bar => bar.x).reverse(),
-                      y: barDataSucc.map(bar => bar.y4).reverse(),
-                      name: barDataSucc.map(bar => bar.name).reverse(),
-                      type: 'bar',
-                      hovertemplate: '(%{x}, %{value:.3s})',
-                    },
-                    {
-                      title: 'Number of successful requests per '+details,
-                      annotations: [
-                        {
-                          y: -0.27,
-                          yref: 'paper',
-                          xref: 'paper',
-                          text: '<i>The above plot shows the number of successful requests made to the EIDA services per month.<\i>',
-                          showarrow: false,
-                          font: {
-                            family: 'Arial',
-                            size: 12,
-                            color: 'black'
-                          }
-                        }
-                      ],
-                      yaxis: {
-                        title: 'Successful Requests'
-                      },
-                      showlegend: true,
-                    }
-                  ],
-                  label: 'Successful Requests',
-                  method: 'update'
-                },
-                // unsuccessful requests button
-                {
-                  args: [
-                    {
-                      x: barDataUnsucc.map(bar => bar.x).reverse(),
-                      y: barDataUnsucc.map(bar => bar.y5).reverse(),
-                      name: barDataUnsucc.map(bar => bar.name).reverse(),
-                      type: 'bar',
-                      hovertemplate: '(%{x}, %{value:.3s})',
-                    },
-                    {
-                      title: 'Number of unsuccessful requests per '+details,
-                      annotations: [
-                        {
-                          y: -0.27,
-                          yref: 'paper',
-                          xref: 'paper',
-                          text: '<i>The above plot shows the number of unsuccessful requests (i.e. requests that did not return any data) made to the EIDA services per month.<\i>',
-                          showarrow: false,
-                          font: {
-                            family: 'Arial',
-                            size: 12,
-                            color: 'black'
-                          }
-                        }
-                      ],
-                      yaxis: {
-                        title: 'Unsuccessful Requests'
-                      },
-                      showlegend: true,
-                    }
-                  ],
-                  label: 'Unsuccessful Requests',
+                  label: 'Requests',
                   method: 'update'
                 }
               ],
@@ -1027,13 +722,11 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                 clients: new HLL(11, 5),
                 bytes: 0,
                 nb_reqs: 0,
-                nb_successful_reqs: 0,
               };
             }
             aggregate[result.country].clients.union(fromHexString(result.hll_clients).hllSet);
             aggregate[result.country].bytes += result.bytes;
             aggregate[result.country].nb_reqs += result.nb_reqs;
-            aggregate[result.country].nb_successful_reqs += result.nb_successful_reqs;
             return aggregate;
           }, {});
           for (const country in aggregatedResults) {
@@ -1141,7 +834,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                   label: 'Bytes',
                   method: 'update'
                 },
-                // total requests button
+                // requests button
                 {
                   args: [
                     {
@@ -1152,13 +845,13 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                       reversescale: true
                     },
                     {
-                      title: 'Number of total requests per country',
+                      title: 'Number of requests per country',
                       annotations: [
                         {
                           y: -0.15,
                           yref: 'paper',
                           xref: 'paper',
-                          text: '<i>The above plot shows the number of total requests made to the EIDA services from each country.<\i>',
+                          text: '<i>The above plot shows the number of requests made to the EIDA services from each country.<\i>',
                           showarrow: false,
                           font: {
                             family: 'Arial',
@@ -1169,69 +862,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                       ],
                     }
                   ],
-                  label: 'Total Requests',
-                  method: 'update'
-                },
-                // successful requests button
-                {
-                  args: [
-                    {
-                      z: [Object.values(aggregatedResults).map(result => result.nb_successful_reqs)],
-                      type: 'choroplethmapbox',
-                      colorscale: 'Viridis',
-                      autocolorscale: false,
-                      reversescale: true
-                    },
-                    {
-                      title: 'Number of successful requests per country',
-                      annotations: [
-                        {
-                          y: -0.15,
-                          yref: 'paper',
-                          xref: 'paper',
-                          text: '<i>The above plot shows the number of successful requests made to the EIDA services from each country.<\i>',
-                          showarrow: false,
-                          font: {
-                            family: 'Arial',
-                            size: 12,
-                            color: 'black'
-                          }
-                        }
-                      ],
-                    }
-                  ],
-                  label: 'Successful Requests',
-                  method: 'update'
-                },
-                // unsuccessful requests button
-                {
-                  args: [
-                    {
-                      z: [Object.values(aggregatedResults).map(result => result.nb_reqs - result.nb_successful_reqs)],
-                      type: 'choroplethmapbox',
-                      colorscale: 'Viridis',
-                      autocolorscale: false,
-                      reversescale: true
-                    },
-                    {
-                      title: 'Number of unsuccessful requests per country',
-                      annotations: [
-                        {
-                          y: -0.15,
-                          yref: 'paper',
-                          xref: 'paper',
-                          text: '<i>The above plot shows the number of unsuccesssful requests (i.e. requests that did not return any data) made to the EIDA services from each country.<\i>',
-                          showarrow: false,
-                          font: {
-                            family: 'Arial',
-                            size: 12,
-                            color: 'black'
-                          }
-                        }
-                      ],
-                    }
-                  ],
-                  label: 'Unsuccessful Requests',
+                  label: 'Requests',
                   method: 'update'
                 }
               ],
@@ -1300,13 +931,11 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                   clients: new HLL(11, 5),
                   bytes: 0,
                   nb_reqs: 0,
-                  nb_successful_reqs: 0,
                 };
               }
               aggregate[result.country].clients.union(fromHexString(result.hll_clients).hllSet);
               aggregate[result.country].bytes += result.bytes;
               aggregate[result.country].nb_reqs += result.nb_reqs;
-              aggregate[result.country].nb_successful_reqs += result.nb_successful_reqs;
               return aggregate;
             }, {});
             for (const country in aggregatedResults) {
@@ -1321,10 +950,6 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                 return result.bytes;
               } else if (activeButtonIndex === 2) {
                 return result.nb_reqs;
-              } else if (activeButtonIndex === 3) {
-                return result.nb_successful_reqs;
-              } else if (activeButtonIndex === 4) {
-                return result.nb_reqs - result.nb_successful_reqs;
               }
             });
             const newMapData = [{
@@ -1345,10 +970,6 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                 button.args[0].z = [Object.values(aggregatedResults).map(result => result.bytes)]
               } else if (button && index === 2) {
                 button.args[0].z = [Object.values(aggregatedResults).map(result => result.nb_reqs)]
-              } else if (button && index === 3) {
-                button.args[0].z = [Object.values(aggregatedResults).map(result => result.nb_successful_reqs)]
-              } else if (button && index === 4) {
-                button.args[0].z = [Object.values(aggregatedResults).map(result => result.nb_reqs - result.nb_successful_reqs)]
               }
             });
             Plotly.react('country-plots', newMapData, mapLayout);
