@@ -19,7 +19,13 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
 
   totalPlots();
   monthAndYearPlots("month");
-  monthAndYearPlots("year");
+  let endYear = new Date().getFullYear();
+  if (endTime) {
+    endYear = endTime.split('-')[0];
+  }
+  if (startTime.split('-')[0] !== endYear) {
+    monthAndYearPlots("year");
+  }
   mapPlots();
 
   function totalPlots() {
@@ -512,7 +518,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                 y: -0.27,
                 yref: 'paper',
                 xref: 'paper',
-                text: '<i>The above plot shows the number of unique users of EIDA services per month.<\i>',
+                text: `<i>The above plot shows the number of unique users of EIDA services per ${details}.${details === "year" ? ' Only months that were specified are included.' : ''}<\i>`,
                 showarrow: false,
                 font: {
                   family: 'Arial',
@@ -548,7 +554,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                           y: -0.27,
                           yref: 'paper',
                           xref: 'paper',
-                          text: '<i>The above plot shows the number of unique users of EIDA services per month.<\i>',
+                          text: `<i>The above plot shows the number of unique users of EIDA services per ${details}.${details === "year" ? ' Only months that were specified are included.' : ''}<\i>`,
                           showarrow: false,
                           font: {
                             family: 'Arial',
@@ -583,7 +589,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                           y: -0.27,
                           yref: 'paper',
                           xref: 'paper',
-                          text: '<i>The above plot shows the number of unique users of EIDA services per month.<\i>',
+                          text: `<i>The above plot shows the number of unique users of EIDA services per ${details}.${details === "year" ? ' Only months that were specified are included.' : ''}<\i>`,
                           showarrow: false,
                           font: {
                             family: 'Arial',
@@ -618,7 +624,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                           y: -0.27,
                           yref: 'paper',
                           xref: 'paper',
-                          text: '<i>The above plot shows the amount of data delivered during the use of EIDA services per month.<\i>',
+                          text: `<i>The above plot shows the amount of data delivered during the use of EIDA services per ${details}.${details === "year" ? ' Only months that were specified are included.' : ''}<\i>`,
                           showarrow: false,
                           font: {
                             family: 'Arial',
@@ -653,7 +659,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                           y: -0.27,
                           yref: 'paper',
                           xref: 'paper',
-                          text: '<i>The above plot shows the number of requests made to the EIDA services per month.<\i>',
+                          text: `<i>The above plot shows the number of requests made to the EIDA services per ${details}.${details === "year" ? ' Only months that were specified are included.' : ''}<\i>`,
                           showarrow: false,
                           font: {
                             family: 'Arial',
