@@ -20,7 +20,7 @@ export function makePlotsEIDA(startTime, endTime) {
   if (endTime) {
     endYear = endTime.split('-')[0];
   }
-  if (startTime.split('-')[0] !== endYear) {
+  if (startTime.split('-')[0] != endYear) {
     monthAndYearPlots("year");
   }
   mapPlots();
