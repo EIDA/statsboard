@@ -197,7 +197,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
         sortedNetsBytes.forEach(({ network, bytes }, index) => {
           if (index < topN) {
             groupedDataBytes.values.push(bytes);
-            groupedDataBytes.labels.push(single ? `${net} (${network})` : network);
+            groupedDataBytes.labels.push(network);
           } else {
             groupedDataBytes.belongsInLess.push(network);
             otherValueBytes += bytes;
@@ -266,7 +266,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
         sortedNetsReq.forEach(({ network, nb_reqs }, index) => {
           if (index < topN) {
             groupedDataReq.values.push(nb_reqs);
-            groupedDataReq.labels.push(single ? `${net} (${network})` : network);
+            groupedDataReq.labels.push(network);
           } else {
             groupedDataReq.belongsInLess.push(network);
             otherValueReq += nb_reqs;
