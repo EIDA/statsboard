@@ -92,7 +92,7 @@ function App() {
           // the below is true if multiple networks asked
           const strNets = isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork);
           makePlotsNetwork(isAuthenticated, file, startTime, endTime, paramToPass(node, inputNode),
-            isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork),
+            isAuthenticated ? paramToPass(network, inputNetwork) : (!inputNetwork && network && network.length !== 0 ? network : inputNetwork),
             (!strNets || strNets.includes(',') || strNets === "") ? undefined : true, (!isNaN(topN) && topN >= 0) ? topN : undefined);
           break;
         case "station":
