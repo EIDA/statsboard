@@ -22,6 +22,7 @@ import { makePlotsStation } from './plotsStation.js';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [commaNets, setCommaNets] = useState(false);
   const [authTokenFile, setAuthTokenFile] = useState(undefined);
   const [startTime, setStartTime] = useState(new Date().getFullYear()+'-01');
   const [endTime, setEndTime] = useState(undefined);
@@ -310,36 +311,41 @@ function App() {
           )}
           {(level === "network" || level === "station") && (
             <div>
-            <Autocomplete
-              className="autocomplete"
-              sx={{ my: 1, minWidth: 300 }}
-              size="small"
-              freeSolo
-              multiple={isAuthenticated}
-              onInputChange={e => setInputNetwork(e.target.value)}
-              onChange={(e, nv) => {setNetwork(nv); setInputNetwork("");}}
-              options={optionsNet}
-              open={openNet}
-              onOpen={() => setOpenNet(true)}
-              onClose={() => {setOpenNet(false); setBroughtNets(false);}}
-              isOptionEqualToValue={(option, value) => option === value}
-              loading={loadingNet}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Network"
-                  InputProps={{
-                    ...params.InputProps,
-                    endAdornment: (
-                      <Fragment>
-                        {loadingNet ? <CircularProgress color="inherit" size={20} /> : null}
-                        {params.InputProps.endAdornment}
-                      </Fragment>
-                    ),
-                  }}
-                />
+              <Autocomplete
+                className="autocomplete"
+                sx={{ my: 1, minWidth: 300 }}
+                size="small"
+                freeSolo
+                multiple={isAuthenticated}
+                onInputChange={e => {setInputNetwork(e.target.value); e.target.value && (network.length > 0 || e.target.value.includes(',')) ? setCommaNets(true) : setCommaNets(false)}}
+                onChange={(e, nv) => {setNetwork(nv); setInputNetwork(""); nv.length > 1 ? setCommaNets(true) : setCommaNets(false)}}
+                options={optionsNet}
+                open={openNet}
+                onOpen={() => setOpenNet(true)}
+                onClose={() => {setOpenNet(false); setBroughtNets(false);}}
+                isOptionEqualToValue={(option, value) => option === value}
+                loading={loadingNet}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Network"
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <Fragment>
+                          {loadingNet ? <CircularProgress color="inherit" size={20} /> : null}
+                          {params.InputProps.endAdornment}
+                        </Fragment>
+                      ),
+                    }}
+                  />
+                )}
+              />
+              {commaNets && (
+                <div className="networks-note">
+                  Selecting multiple network requires node operator privileges. Make sure your EIDA account is set up accordingly.
+                </div>
               )}
-            />
             </div>
           )}
           {level === "station" && (
