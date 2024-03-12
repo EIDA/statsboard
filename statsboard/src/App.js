@@ -345,6 +345,9 @@ function App() {
           {level === "station" && (
             <div>
               <TextField label="Station" sx={{ my: 1, minWidth: 300 }} size="small" variant="outlined" value={station} onChange={e => setStation(e.target.value)} />
+              <div className="stations-note">
+                Comma-separated list, e.g. STA1,STA2
+              </div>
             </div>
           )}
         </Grid>

@@ -36,6 +36,13 @@ h1 {
   margin: 5px 0;
 }
 
+.stations-note {
+  font-size: 13px;
+  color: #999;
+  font-style: italic;
+  margin-top: -5px;
+}
+
 #mapAndBoxes {
   display: flex;
   align-items: flex-start;
