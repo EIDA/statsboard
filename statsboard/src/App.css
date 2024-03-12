@@ -36,6 +36,13 @@ h1 {
   margin: 5px 0;
 }
 
+.networks-note {
+  font-size: 12px;
+  color: #CA2400;
+  font-style: italic;
+  margin-top: -5px;
+}
+
 .stations-note {
   font-size: 13px;
   color: #999;
