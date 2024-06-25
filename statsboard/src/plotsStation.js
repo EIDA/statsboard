@@ -29,7 +29,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
 
   function totalPlots() {
     const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/restricted?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}${net ? `&network=${net}` : ''}${sta ? `&station=${sta}` : ''}&level=station&hllvalues=true&format=json`;
-    fetch(url, {method: 'POST', body: file})
+    fetch(url, {method: 'POST', headers: {'Content-Type': 'application/octet-stream'}, body: file})
       .then((response) => {
         if (response.ok) {
           return response.json();
@@ -93,7 +93,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
               y: -0.25,
               xref: 'paper',
               yref: 'paper',
-              text: '*<i>Important note: The number of unique users is correct for<br>each station. However, the whole pie does not represent<br>the real value of the total users for all selected stations, as<br>many clients may have asked data from multiple stations.<\i>',
+              text: '*<i>Important note: Unique users are estimated based on anonymised<br>distinct IP addresses of the clients issuing requests. The number of<br>unique users is correct for each station. However, the whole pie does not<br>represent the real value of the total users for all selected stations,<br>as many clients may have asked data from multiple stations.<\i>',
               showarrow: false,
               font: {
                 family: 'Arial',
@@ -120,7 +120,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
                         y: -0.25,
                         xref: 'paper',
                         yref: 'paper',
-                        text: '*<i>Important note: The number of unique users is correct for<br>each station. However, the whole pie does not represent<br>the real value of the total users for all selected stations, as<br>many clients may have asked data from multiple stations.<\i>',
+                        text: '*<i>Important note: Unique users are estimated based on anonymised<br>distinct IP addresses of the clients issuing requests. The number of<br>unique users is correct for each station. However, the whole pie does not<br>represent the real value of the total users for all selected stations,<br>as many clients may have asked data from multiple stations.<\i>',
                         showarrow: false,
                         font: {
                           family: 'Arial',
@@ -145,7 +145,22 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
                   },
                   {
                     title: 'Total number of unique users of all specified stations',
-                    annotations: []
+                    annotations: [
+                      {
+                        xshift: -20,
+                        y: -0.25,
+                        xref: 'paper',
+                        yref: 'paper',
+                        text: '*<i>Important note: Unique users are estimated based on<br>anonymised distinct IP addresses of the clients issuing requests.<\i>',
+                        showarrow: false,
+                        font: {
+                          family: 'Arial',
+                          size: 12,
+                          color: 'black'
+                        }
+                      }
+
+                    ]
                   }
                 ],
                 label: 'Unique Users All Stations',
@@ -262,7 +277,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
 
     function monthAndYearPlots(details = "month") {
       const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/restricted?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}${net ? `&network=${net}` : ''}${sta ? `&station=${sta}` : ''}&level=station&details=${details}&hllvalues=true&format=json`;
-      fetch(url, {method: 'POST', body: file})
+      fetch(url, {method: 'POST', headers: {'Content-Type': 'application/octet-stream'}, body: file})
         .then((response) => {
           if (response.ok) {
             return response.json();
@@ -439,10 +454,10 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
             title: 'Number of unique users per '+details,
             annotations: [
               {
-                y: -0.27,
+                y: -0.28,
                 yref: 'paper',
                 xref: 'paper',
-                text: `<i>The above plot shows the number of unique users of EIDA services per ${details}.${details === "year" ? ' Only months that were specified are included.' : ''}<\i>`,
+                text: `<i>The above plot shows the number of unique users of EIDA services per ${details}.${details === "year" ? ' Only months that were specified are included.' : ''}<br>*Important note: Unique users are estimated based on anonymised distinct IP addresses of the clients issuing requests.<\i>`,
                 showarrow: false,
                 font: {
                   family: 'Arial',
@@ -475,10 +490,10 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
                       title: 'Number of unique users per '+details,
                       annotations: [
                         {
-                          y: -0.27,
+                          y: -0.28,
                           yref: 'paper',
                           xref: 'paper',
-                          text: `<i>The above plot shows the number of unique users of EIDA services per ${details}.${details === "year" ? ' Only months that were specified are included.' : ''}<\i>`,
+                          text: `<i>The above plot shows the number of unique users of EIDA services per ${details}.${details === "year" ? ' Only months that were specified are included.' : ''}<br>*Important note: Unique users are estimated based on anonymised distinct IP addresses of the clients issuing requests.<\i>`,
                           showarrow: false,
                           font: {
                             family: 'Arial',
@@ -510,10 +525,10 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
                       title: 'Number of unique users of all specified stations per '+details,
                       annotations: [
                         {
-                          y: -0.27,
+                          y: -0.28,
                           yref: 'paper',
                           xref: 'paper',
-                          text: `<i>The above plot shows the number of unique users of EIDA services per ${details}.${details === "year" ? ' Only months that were specified are included.' : ''}<\i>`,
+                          text: `<i>The above plot shows the number of unique users of EIDA services per ${details}.${details === "year" ? ' Only months that were specified are included.' : ''}<br>*Important note: Unique users are estimated based on anonymised distinct IP addresses of the clients issuing requests.<\i>`,
                           showarrow: false,
                           font: {
                             family: 'Arial',
@@ -619,7 +634,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
 
     function mapPlots() {
       const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/restricted?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}${net ? `&network=${net}` : ''}${sta ? `&station=${sta}` : ''}&level=station&details=country&hllvalues=true&format=json`;
-      fetch(url, {method: 'POST', body: file})
+      fetch(url, {method: 'POST', headers: {'Content-Type': 'application/octet-stream'}, body: file})
         .then((response) => {
           if (response.ok) {
             return response.json();
@@ -680,7 +695,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
                 y: -0.15,
                 yref: 'paper',
                 xref: 'paper',
-                text: '<i>The above plot shows the number of unique users of EIDA services from each country.<\i>',
+                text: '<i>The above plot shows the number of unique users of EIDA services from each country.<br>*Important note: Unique users are estimated based on anonymised distinct IP addresses of the clients issuing requests.<\i>',
                 showarrow: false,
                 font: {
                   family: 'Arial',
@@ -714,7 +729,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
                           y: -0.15,
                           yref: 'paper',
                           xref: 'paper',
-                          text: '<i>The above plot shows the number of unique users of EIDA services from each country.<\i>',
+                          text: '<i>The above plot shows the number of unique users of EIDA services from each country.<br>*Important note: Unique users are estimated based on anonymised distinct IP addresses of the clients issuing requests.<\i>',
                           showarrow: false,
                           font: {
                             family: 'Arial',
