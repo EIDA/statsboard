@@ -35,7 +35,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
     } else {
       url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}${net ? `&network=${net}` : ''}&level=network&hllvalues=true&format=json`;
     }
-    fetch(url, {method: isAuthenticated ? 'POST' : 'GET', body: isAuthenticated ? file : null})
+    fetch(url, {method: isAuthenticated ? 'POST' : 'GET', headers: isAuthenticated ? {'Content-Type': 'application/octet-stream'} : {}, body: isAuthenticated ? file : null})
       .then((response) => {
         if (response.ok) {
           return response.json();
@@ -338,7 +338,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
       else {
         url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}${net ? `&network=${net}` : ''}&level=network&details=${details}&hllvalues=true&format=json`;
       }
-      fetch(url, {method: isAuthenticated ? 'POST' : 'GET', body: isAuthenticated ? file : null})
+      fetch(url, {method: isAuthenticated ? 'POST' : 'GET', headers: isAuthenticated ? {'Content-Type': 'application/octet-stream'} : {}, body: isAuthenticated ? file : null})
         .then((response) => {
           if (response.ok) {
             return response.json();
@@ -715,7 +715,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
       } else {
         url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/public?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}${net ? `&network=${net}` : ''}&level=network&details=country&hllvalues=true&format=json`;
       }
-      fetch(url, {method: isAuthenticated ? 'POST' : 'GET', body: isAuthenticated ? file : null})
+      fetch(url, {method: isAuthenticated ? 'POST' : 'GET', headers: isAuthenticated ? {'Content-Type': 'application/octet-stream'} : {}, body: isAuthenticated ? file : null})
         .then((response) => {
           if (response.ok) {
             return response.json();

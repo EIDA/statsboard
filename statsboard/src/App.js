@@ -88,8 +88,7 @@ function App() {
           makePlotsNode(startTime, endTime, paramToPass(node, inputNode));
           break;
         case "network":
-          let file = new FormData();
-          file.append('file', authTokenFile);
+          let file = authTokenFile;
           // the below is true if multiple networks asked
           const strNets = isAuthenticated ? paramToPass(network, inputNetwork) : (network && network.length !== 0 ? network : inputNetwork);
           makePlotsNetwork(isAuthenticated, file, startTime, endTime, paramToPass(node, inputNode),
@@ -97,8 +96,7 @@ function App() {
             (!strNets || strNets.includes(',') || strNets === "") ? undefined : true, (!isNaN(topN) && topN >= 0) ? topN : undefined);
           break;
         case "station":
-          let fileSta = new FormData();
-          fileSta.append('file', authTokenFile);
+          let fileSta = authTokenFile;
           makePlotsStation(fileSta, startTime, endTime, paramToPass(node, inputNode), paramToPass(network, inputNetwork), station,
             (!isNaN(topN) && topN >= 0) ? topN : undefined);
           break;

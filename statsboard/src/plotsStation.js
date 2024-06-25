@@ -29,7 +29,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
 
   function totalPlots() {
     const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/restricted?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}${net ? `&network=${net}` : ''}${sta ? `&station=${sta}` : ''}&level=station&hllvalues=true&format=json`;
-    fetch(url, {method: 'POST', body: file})
+    fetch(url, {method: 'POST', headers: {'Content-Type': 'application/octet-stream'}, body: file})
       .then((response) => {
         if (response.ok) {
           return response.json();
@@ -277,7 +277,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
 
     function monthAndYearPlots(details = "month") {
       const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/restricted?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}${net ? `&network=${net}` : ''}${sta ? `&station=${sta}` : ''}&level=station&details=${details}&hllvalues=true&format=json`;
-      fetch(url, {method: 'POST', body: file})
+      fetch(url, {method: 'POST', headers: {'Content-Type': 'application/octet-stream'}, body: file})
         .then((response) => {
           if (response.ok) {
             return response.json();
@@ -634,7 +634,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
 
     function mapPlots() {
       const url = `https://ws.resif.fr/eidaws/statistics/1/dataselect/restricted?start=${startTime}${endTime ? `&end=${endTime}` : ''}${node ? `&node=${node}` : ''}${net ? `&network=${net}` : ''}${sta ? `&station=${sta}` : ''}&level=station&details=country&hllvalues=true&format=json`;
-      fetch(url, {method: 'POST', body: file})
+      fetch(url, {method: 'POST', headers: {'Content-Type': 'application/octet-stream'}, body: file})
         .then((response) => {
           if (response.ok) {
             return response.json();
