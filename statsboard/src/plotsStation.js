@@ -148,7 +148,7 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
                     annotations: [
                       {
                         xshift: -20,
-                        y: -0.25,
+                        y: -0.29,
                         xref: 'paper',
                         yref: 'paper',
                         text: '*<i>Important note: Unique users are estimated based on<br>anonymised distinct IP addresses of the clients issuing requests.<\i>',
