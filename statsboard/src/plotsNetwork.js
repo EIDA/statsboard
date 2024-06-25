@@ -106,7 +106,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
           annotations: [
             {
               xshift: -20,
-              y: -0.25,
+              y: -0.29,
               xref: 'paper',
               yref: 'paper',
               text: '*<i>Important note: Unique users are estimated based on anonymised<br>distinct IP addresses of the clients issuing requests. The number of<br>unique users is correct for each network. However, the whole pie does not<br>represent the real value of the total users for all selected networks,<br>as many clients may have asked data from multiple networks.<\i>',
@@ -133,7 +133,7 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
                     annotations: [
                       {
                         xshift: -20,
-                        y: -0.25,
+                        y: -0.29,
                         xref: 'paper',
                         yref: 'paper',
                         text: '*<i>Important note: Unique users are estimated based on anonymised<br>distinct IP addresses of the clients issuing requests. The number of<br>unique users is correct for each network. However, the whole pie does not<br>represent the real value of the total users for all selected networks,<br>as many clients may have asked data from multiple networks.<\i>',

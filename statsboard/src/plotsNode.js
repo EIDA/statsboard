@@ -131,7 +131,7 @@ export function makePlotsNode(startTime, endTime, node) {
                         annotations: [
                           {
                             xshift: -20,
-                            y: -0.25,
+                            y: -0.29,
                             xref: 'paper',
                             yref: 'paper',
                             text: '*<i>Important note: Unique users are estimated based on anonymised<br>distinct IP addresses of the clients issuing requests. The number of<br>unique users is correct for each node. However, the whole pie does not<br>represent the real value of the total users for all selected nodes,<br>as many clients may have asked data from multiple nodes.<\i>',
@@ -162,7 +162,7 @@ export function makePlotsNode(startTime, endTime, node) {
                         annotations: [
                           {
                             xshift: -20,
-                            y: -0.25,
+                            y: -0.29,
                             xref: 'paper',
                             yref: 'paper',
                             text: '*<i>Important note: Unique users are estimated based on<br>anonymised distinct IP addresses of the clients issuing requests.<\i>',
