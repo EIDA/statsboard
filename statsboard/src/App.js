@@ -107,7 +107,7 @@ function App() {
     }, 200);
   }
 
-  // make a call to retrieve list of nodes
+  // make a call to retrieve list of nodes for autocomplete function in nodes input field
   async function get_nodes() {
     try {
       const response = await fetch('https://ws.resif.fr/eidaws/statistics/1/nodes');
@@ -146,7 +146,7 @@ function App() {
     }
   }, [open]);
 
-  // make a call to retrieve list of networks
+  // make a call to retrieve list of networks for autocomplete function in networks input field
   async function get_networks() {
     try {
       const response = await fetch('https://ws.resif.fr/eidaws/statistics/1/networks');
