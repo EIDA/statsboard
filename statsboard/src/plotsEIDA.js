@@ -296,7 +296,11 @@ export function makePlotsEIDA(startTime, endTime) {
           else if (details === "month") {
             barLayout.xaxis["dtick"] = "M1";
           }
-          Plotly.newPlot(details+'-plots', barData, barLayout, {displaylogo: false});
+          let config = {
+            displaylogo: false,
+            modeBarButtonsToRemove: ['select2d','lasso2d','autoScale2d']
+          }
+          Plotly.newPlot(details+'-plots', barData, barLayout, config);
         })
         .catch((error) => console.log(error));
     }
@@ -522,7 +526,11 @@ export function makePlotsEIDA(startTime, endTime) {
               type: 'buttons'
             }]
           };
-          Plotly.newPlot('country-plots', mapData, mapLayout, {displaylogo: false});
+          let config = {
+            displaylogo: false,
+            modeBarButtonsToRemove: ['select2d','lasso2d','autoScale2d']
+          }
+          Plotly.newPlot('country-plots', mapData, mapLayout, config);
           const mapAndBoxes = document.getElementById('mapAndBoxes');
           mapAndBoxes.style.backgroundColor = 'white';
         })

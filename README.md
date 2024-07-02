@@ -60,22 +60,22 @@ If deployment was successful, there will be a new commit to the branch `gh_pages
 To get the documentation of the current version of Statistics Dashboard follow the steps below.
 
 - Move to the `doc` folder of the project:
-```
-cd doc
-```
+  ```
+  cd doc
+  ```
 
 - Install [Sphinx Documentation](https://www.sphinx-doc.org/en/master/), if not already installed in your system:
-```
-pip install Sphinx
-```
+  ```
+  pip install Sphinx
+  ```
 
 - Build the documentation:
-```
-make latexpdf
-```
-**Note:** Some more TeX Live packages may be required to be installed before running the above command. For a minimal TeX Live distribution try:
-```
-sudo apt install texlive texlive-latex-extra texlive-fonts-recommended texlive-science latexmk
-```
+  ```
+  make latexpdf
+  ```
+  **Note:** Some more TeX Live packages may be required to be installed before running the above command. For a minimal TeX Live distribution try:
+  ```
+  sudo apt install texlive texlive-latex-extra texlive-fonts-recommended texlive-science latexmk
+  ```
 
-- Open the generated PDF file, which will be located under the .build/latex directory.
+- Open the generated PDF file, which will be located under the ``.build/latex` directory.

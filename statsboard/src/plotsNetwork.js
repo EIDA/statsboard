@@ -703,7 +703,11 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
           else if (details === "month") {
             barLayout.xaxis["dtick"] = "M1";
           }
-          Plotly.newPlot(details+'-plots', barDataClients.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: bar.type, mode: bar.mode, hovertemplate: bar.hovertemplate})), barLayout, {displaylogo: false});
+          let config = {
+            displaylogo: false,
+            modeBarButtonsToRemove: ['select2d','lasso2d','autoScale2d']
+          }
+          Plotly.newPlot(details+'-plots', barDataClients.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: bar.type, mode: bar.mode, hovertemplate: bar.hovertemplate})), barLayout, config);
         })
         .catch((error) => console.log(error));
     }
@@ -891,7 +895,11 @@ export function makePlotsNetwork(isAuthenticated, file, startTime, endTime, node
               type: 'buttons'
             }]
           };
-          Plotly.newPlot('country-plots', mapData, mapLayout, {displaylogo: false});
+          let config = {
+            displaylogo: false,
+            modeBarButtonsToRemove: ['select2d','lasso2d','autoScale2d']
+          }
+          Plotly.newPlot('country-plots', mapData, mapLayout, config);
 
           let networksSorted;
           if (single) {
