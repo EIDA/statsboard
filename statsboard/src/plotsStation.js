@@ -627,7 +627,11 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
           else if (details === "month") {
             barLayout.xaxis["dtick"] = "M1";
           }
-          Plotly.newPlot(details+'-plots', barDataClients.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: bar.type, mode: bar.mode, hovertemplate: bar.hovertemplate})), barLayout, {displaylogo: false});
+          let config = {
+            displaylogo: false,
+            modeBarButtonsToRemove: ['select2d','lasso2d','autoScale2d']
+          }
+          Plotly.newPlot(details+'-plots', barDataClients.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: bar.type, mode: bar.mode, hovertemplate: bar.hovertemplate})), barLayout, config);
         })
         .catch((error) => console.log(error));
     }
@@ -810,7 +814,11 @@ export function makePlotsStation(file, startTime, endTime, node, net, sta, topN=
               type: 'buttons'
             }]
           };
-          Plotly.newPlot('country-plots', mapData, mapLayout, {displaylogo: false});
+          let config = {
+            displaylogo: false,
+            modeBarButtonsToRemove: ['select2d','lasso2d','autoScale2d']
+          }
+          Plotly.newPlot('country-plots', mapData, mapLayout, config);
           const stationsSorted = Array.from(new Set(data.results.map(result => result.network ? result.network + '.' + result.station : result.station))).sort((a, b) => a.localeCompare(b));
           let stationCheckboxes = stationsSorted.map((station, index) => (
             <div key={index}>
