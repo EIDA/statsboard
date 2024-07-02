@@ -107,7 +107,7 @@ function App() {
     }, 200);
   }
 
-  // make a call to retrieve list of nodes
+  // make a call to retrieve list of nodes for autocomplete function in nodes input field
   async function get_nodes() {
     try {
       const response = await fetch('https://ws.resif.fr/eidaws/statistics/1/nodes');
@@ -146,7 +146,7 @@ function App() {
     }
   }, [open]);
 
-  // make a call to retrieve list of networks
+  // make a call to retrieve list of networks for autocomplete function in networks input field
   async function get_networks() {
     try {
       const response = await fetch('https://ws.resif.fr/eidaws/statistics/1/networks');
@@ -215,7 +215,8 @@ function App() {
           <h1>EIDA Statistics Dashboard</h1>
           <div className="info">
             Dashboard UI to explore usage statistics in the form of plots for services distributed in the <a href="http://www.orfeus-eu.org/data/eida/">EIDA</a> federation.<br></br>
-            For more details, visit the <a href="https://ws.resif.fr/eidaws/statistics/1/">statistics webservice</a>.<br></br>
+            The API behind this dashboard is hosted at <a href="https://ws.resif.fr/">Résif</a> at <a href="https://ws.resif.fr/eidaws/statistics/1/">statistics webservice</a>.<br></br>
+            Users have to be aware of the <a href="http://ws.resif.fr/terms_of_services/">terms of service</a>.<br></br>
             The code of the current dashboard is hosted at <a href="https://github.com/EIDA/statsboard">github</a>.<br></br>
             The starting date of collecting statistics data is 2020-11.<br></br>
             For members of EIDA federation, choose the authentication below for full access to data.
