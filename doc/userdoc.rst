@@ -1,4 +1,4 @@
-=======
+#######
 Summary
 #######
 
@@ -20,28 +20,15 @@ we designed another service, the current Statsboard, it being a dashboard
 with which a user can make requests to the Statistics service and get plots
 of the output depicted in their browser.
 
-============
-
+#######
 License
--------
-=======
+#######
+
 The service is intended to be open and able to be used by anyone from its
 dedicated web page, currently hosted at
 `Statsboard Web Page <https://orfeus-eu.org/data/eida/stats/>`_.
 The need of authentication is limited to the data regarding networks the
 operators of which have chosen to restrict from being public.
-
-
-Installation
-############
-
-The service is not intended to be deployed at each node, but rather be used
-from its dedicated web page. However, for the sake of completeness,
-should anyone wish to use or deploy either locally or in a server
-the current service, they can follow the instructions below.
-
-License
-=======
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -55,6 +42,15 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see http://www.gnu.org/licenses/.
+
+############
+Installation
+############
+
+The service is not intended to be deployed at each node, but rather be used
+from its dedicated web page. However, for the sake of completeness,
+should anyone wish to use or deploy either locally or in a server
+the current service, they can follow the instructions below.
 
 Requirements
 ============
@@ -79,8 +75,6 @@ Move into the statsboard folder of the project and install the necessary librari
   $ npm install
 
 Deployment
-=================
-=======
 ==========
 
 Use the appropriate commands of npm to use or deploy either locally or in a server. ::
@@ -95,7 +89,7 @@ OR ::
 
   $ npm run deploy
 
-
+#################
 Using the Service
 #################
 

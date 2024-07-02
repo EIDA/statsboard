@@ -53,3 +53,29 @@ After pushing an update, in order to re-deploy in github pages follow below step
 If deployment was successful, there will be a new commit to the branch `gh_pages` and the application at https://eida.github.io/statsboard/ will be updated.
 
 **Note:** You might need to clear your browser's cache or open a new browser to view the updates immediately.
+
+
+## Documentation
+
+To get the documentation of the current version of Statistics Dashboard follow the steps below.
+
+- Move to the `doc` folder of the project:
+```
+cd doc
+```
+
+- Install [Sphinx Documentation](https://www.sphinx-doc.org/en/master/), if not already installed in your system:
+```
+pip install Sphinx
+```
+
+- Build the documentation:
+```
+make latexpdf
+```
+**Note:** Some more TeX Live packages may be required to be installed before running the above command. For a minimal TeX Live distribution try:
+```
+sudo apt install texlive texlive-latex-extra texlive-fonts-recommended texlive-science latexmk
+```
+
+- Open the generated PDF file, which will be located under the .build/latex directory.
