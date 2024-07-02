@@ -215,7 +215,8 @@ function App() {
           <h1>EIDA Statistics Dashboard</h1>
           <div className="info">
             Dashboard UI to explore usage statistics in the form of plots for services distributed in the <a href="http://www.orfeus-eu.org/data/eida/">EIDA</a> federation.<br></br>
-            For more details, visit the <a href="https://ws.resif.fr/eidaws/statistics/1/">statistics webservice</a>.<br></br>
+            The API behind this dashboard is hosted at <a href="https://ws.resif.fr/">Résif</a> at <a href="https://ws.resif.fr/eidaws/statistics/1/">statistics webservice</a>.<br></br>
+            Users have to be aware of the <a href="http://ws.resif.fr/terms_of_services/">terms of service</a>.<br></br>
             The code of the current dashboard is hosted at <a href="https://github.com/EIDA/statsboard">github</a>.<br></br>
             The starting date of collecting statistics data is 2020-11.<br></br>
             For members of EIDA federation, choose the authentication below for full access to data.
