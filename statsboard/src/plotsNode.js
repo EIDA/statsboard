@@ -16,6 +16,16 @@ export function makePlotsNode(startTime, endTime, node) {
   }
   const intervalId = setInterval(flashLoadingMessage, 500);
 
+  // icon for custom modebar button for downloading data in csv
+  let icon = {
+    'width': 24,
+    'height': 24,
+    'path': 'M11 3.01254C10.9983 2.46026 11.4446 2.01114 11.9969 2.00941C12.5492 2.00768 12.9983 2.45399 13 3.00627L11 3.01254Z ' +
+            'M14.3158 10.2951L13.0269 11.592L13 3.00627L11 3.01254L11.0269 11.5983L9.73003 10.3095C9.33828 9.92018 8.7051 9.92214 8.3158 10.3139C7.9265 10.7056 7.92849 11.3388 8.32024 11.7281L8.32275 11.7306L8.32374 11.7316L12.039 15.4236L15.7206 11.7187L15.7262 11.7131L15.727 11.7123L15.7278 11.7115L15.7337 11.7056L15.7344 11.7049L14.3158 10.2951Z ' +
+            'M15.7344 11.7049C16.1237 11.3131 16.1217 10.6799 15.73 10.2906C15.3382 9.90134 14.705 9.90335 14.3158 10.2951L15.7344 11.7049Z ' +
+            'M4 12C4 10.8954 4.89543 10 6 10C6.55228 10 7 9.55228 7 9C7 8.44771 6.55228 8 6 8C3.79086 8 2 9.79086 2 12V18C2 20.2091 3.79086 22 6 22H17C19.7614 22 22 19.7614 22 17V12C22 9.79086 20.2091 8 18 8C17.4477 8 17 8.44771 17 9C17 9.55228 17.4477 10 18 10C19.1046 10 20 10.8954 20 12V17C20 18.6569 18.6569 20 17 20H6C4.89543 20 4 19.1046 4 18V12Z'
+  };
+
   // make a call to retrieve list of nodes
   fetch('https://ws.resif.fr/eidaws/statistics/1/nodes')
     .then((response) => {
@@ -87,6 +97,56 @@ export function makePlotsNode(startTime, endTime, node) {
             data.results.forEach((result) => {
               hll.union(fromHexString(result.hll_clients).hllSet);
             });
+
+            // function to create a custom modebar button for downloading data as CSV
+            function createDownloadButton() {
+              return {
+                name: 'Download CSV',
+                icon: icon,
+                click: function(gd) {
+                  const { values, csvHeader } = getCurrentValues(gd);
+                  let csvContent = "data:text/csv;charset=utf-8," + csvHeader + "\n";
+                  for (let i = 0; i < gd.data[0].labels.length; i++) {
+                    csvContent += `${gd.data[0].labels[i]},${values[i]}\n`;
+                  }
+                  const encodedUri = encodeURI(csvContent);
+                  const link = document.createElement("a");
+                  link.setAttribute("href", encodedUri);
+                  link.setAttribute("download", "data.csv");
+                  document.body.appendChild(link); // Required for Firefox
+                  link.click();
+                  document.body.removeChild(link); // Clean up after download
+                }
+              };
+            }
+            // function to get current plot values based on the title
+            function getCurrentValues(gd) {
+              const title = gd.layout.title.text;
+              let values, csvHeader;
+              if (title.includes('users')) {
+                csvHeader = "Nodes,Users";
+                values = rearrangedResults.map(result => result.clients);
+              } else if (title.includes('bytes')) {
+                csvHeader = "Nodes,Bytes";
+                values = rearrangedResults.map(result => result.bytes);
+              } else if (title.includes('of requests')) {
+                csvHeader = "Nodes,TotalRequests";
+                values = rearrangedResults.map(result => result.nb_reqs);
+              } else if (title.includes('of successful')) {
+                csvHeader = "Nodes,SuccessfulRequests";
+                values = rearrangedResults.map(result => result.nb_successful_reqs);
+              } else if (title.includes('unsuccessful')) {
+                csvHeader = "Nodes,UnsuccessfulRequests";
+                values = rearrangedResults.map(result => result.nb_reqs - result.nb_successful_reqs);
+              }
+              return { values, csvHeader };
+            }
+            // config for modebar
+            const config = {
+                displaylogo: false,
+                modeBarButtonsToAdd: [createDownloadButton()]
+            };
+
             // clients plot, per node pie at first
             const pieDataClients = {
               values: rearrangedResults.map(result => result.clients),
@@ -173,7 +233,6 @@ export function makePlotsNode(startTime, endTime, node) {
                               color: 'black'
                             }
                           }
-
                         ]
                       }
                     ],
@@ -185,7 +244,7 @@ export function makePlotsNode(startTime, endTime, node) {
                 type: 'buttons'
               }]
             };
-            Plotly.newPlot('total-clients', [pieDataClients], pieLayoutClients, {displaylogo: false});
+            Plotly.newPlot('total-clients', [pieDataClients], pieLayoutClients, config);
 
             // bytes plot
             const pieDataBytes = {
@@ -217,7 +276,7 @@ export function makePlotsNode(startTime, endTime, node) {
                 }
               ],
             };
-            Plotly.newPlot('total-bytes', [pieDataBytes], pieLayoutBytes, {displaylogo: false});
+            Plotly.newPlot('total-bytes', [pieDataBytes], pieLayoutBytes, config);
 
             // requests plot
             // show total requests at first
@@ -346,7 +405,7 @@ export function makePlotsNode(startTime, endTime, node) {
                 type: 'buttons'
               }]
             };
-            Plotly.newPlot('total-requests', [pieDataRequests], pieLayoutRequests, {displaylogo: false});
+            Plotly.newPlot('total-requests', [pieDataRequests], pieLayoutRequests, config);
           })
           .catch((error) => console.log(error));
         }
@@ -405,6 +464,61 @@ export function makePlotsNode(startTime, endTime, node) {
                 clientsAllNodes.push([]);
               });
               clientsAllNodes[clientsAllNodes.length - 1] = Object.values(hlls).map(hll => hll.cardinality());
+
+              // function to create a custom modebar button for downloading data as CSV
+              function createDownloadButton() {
+                return {
+                  name: 'Download CSV',
+                  icon: icon,
+                  click: function(gd) {
+                    const csvHeader = getAppropriateHeader(gd);
+                    let csvContent = "data:text/csv;charset=utf-8," + csvHeader + "\n";
+                    if (!csvHeader.includes("UsersAllNodes")) {
+                      gd.data.forEach(trace => {
+                        trace.x.forEach((xValue, i) => {
+                          csvContent += `${xValue},${trace.name},${trace.y[i]}\n`;
+                        });
+                      });
+                    } else {
+                      gd.data.at(-1).x.forEach((xValue, i) => {
+                        csvContent += `${xValue},${gd.data.at(-1).y[i]}\n`;
+                      });
+                    }
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", "data.csv");
+                    document.body.appendChild(link); // Required for Firefox
+                    link.click();
+                    document.body.removeChild(link); // Clean up after download
+                  }
+                };
+              }
+              // function to get appropriate csv header based on the title
+              function getAppropriateHeader(gd) {
+                const title = gd.layout.title.text;
+                const monthOrYear = details.charAt(0).toUpperCase() + details.slice(1)
+                if (title.includes('of users per')) {
+                  return `${monthOrYear},Node,UsersPerNode`;
+                } else if (title.includes('users of all')) {
+                  return `${monthOrYear},UsersAllNodes`;
+                } else if (title.includes('bytes')) {
+                  return `${monthOrYear},Node,Bytes`;
+                } else if (title.includes('total')) {
+                  return `${monthOrYear},Node,TotalRequests`;
+                } else if (title.includes('of successful')) {
+                  return `${monthOrYear},Node,SuccessfulRequests`;
+                } else if (title.includes('unsuccessful')) {
+                  return `${monthOrYear},Node,UnsuccessfulRequests`;
+                }
+              }
+              // config for modebar with the download button
+              const config = {
+                displaylogo: false,
+                modeBarButtonsToAdd: [createDownloadButton()],
+                modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d']
+              };
+
               // show clients at first
               const barData = Object.keys(nodesColors).map((node, index) => {
                   const nodeResults = data.results.filter(result => result.node === node);
@@ -682,10 +796,6 @@ export function makePlotsNode(startTime, endTime, node) {
               else if (details === "month") {
                 barLayout.xaxis["dtick"] = "M1";
               }
-              let config = {
-                displaylogo: false,
-                modeBarButtonsToRemove: ['select2d','lasso2d','autoScale2d']
-              }
               Plotly.newPlot(details+'-plots', barData.map(bar => ({x: bar.x, y: bar.y1, name: bar.name, type: bar.type, mode: bar.mode, marker: bar.marker, hovertemplate: bar.hovertemplate})), barLayout, config);
             })
             .catch((error) => console.log(error));
@@ -742,6 +852,66 @@ export function makePlotsNode(startTime, endTime, node) {
               // convert ISO-2 to ISO-3 country codes
               const iso2ToIso3 = require('country-iso-2-to-3');
               const countryCodesISO3 = Object.values(aggregatedResults).map(result => result.country).map(code => iso2ToIso3(code));
+
+              // function to create a custom modebar button for downloading data as CSV
+              function createDownloadButton() {
+                return {
+                  name: 'Download CSV',
+                  icon: icon,
+                  click: function(gd) {
+                    const { csvHeader, csvRows } = getCurrentValues(gd);
+                    let csvContent = "data:text/csv;charset=utf-8," + csvHeader + "\n";
+                    csvRows.forEach(row => {
+                      csvContent += row.join(',') + "\n";
+                    });
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", "data.csv");
+                    document.body.appendChild(link); // Required for Firefox
+                    link.click();
+                    document.body.removeChild(link); // Clean up after download
+                  }
+                };
+              }
+              // function to get current plot values based on the title
+              function getCurrentValues(gd) {
+                const title = gd.layout.title.text;
+                let csvHeader, csvRows = [];
+                if (title.includes('users')) {
+                  csvHeader = "Country,Node,Users";
+                  data.results.forEach(result => {
+                    csvRows.push([result.country, result.node, result.clients]);
+                  });
+                } else if (title.includes('bytes')) {
+                  csvHeader = "Country,Node,Bytes";
+                  data.results.forEach(result => {
+                    csvRows.push([result.country, result.node, result.bytes]);
+                  });
+                } else if (title.includes('total')) {
+                  csvHeader = "Country,Node,TotalRequests";
+                  data.results.forEach(result => {
+                    csvRows.push([result.country, result.node, result.nb_reqs]);
+                  });
+                } else if (title.includes('of successful')) {
+                  csvHeader = "Country,Node,SuccessfulRequests";
+                  data.results.forEach(result => {
+                    csvRows.push([result.country, result.node, result.nb_successful_reqs]);
+                  });
+                } else if (title.includes('unsuccessful')) {
+                  csvHeader = "Country,Node,UnsuccessfulRequests";
+                  data.results.forEach(result => {
+                    csvRows.push([result.country, result.node, result.nb_reqs - result.nb_successful_reqs]);
+                  });
+                }
+                return { csvHeader, csvRows };
+              }
+              // config for modebar with the download button
+              const config = {
+                displaylogo: false,
+                modeBarButtonsToAdd: [createDownloadButton()],
+                modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d']
+              };
 
               // show clients to all nodes at first
               const mapData = [{
@@ -939,10 +1109,6 @@ export function makePlotsNode(startTime, endTime, node) {
                   type: 'buttons'
                 }]
               };
-              let config = {
-                displaylogo: false,
-                modeBarButtonsToRemove: ['select2d','lasso2d','autoScale2d']
-              }
               Plotly.newPlot('country-plots', mapData, mapLayout, config);
 
               let nodeCheckboxes = Object.keys(nodesColors).map((node, index) => (
