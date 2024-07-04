@@ -160,7 +160,7 @@ export function makePlotsNode(startTime, endTime, node) {
               sort: false
             };
             const pieLayoutClients = {
-              title: 'Total number of users* per node',
+              title: 'Total number of unique users* per node',
               annotations: [
                 {
                   xshift: -20,
@@ -187,7 +187,7 @@ export function makePlotsNode(startTime, endTime, node) {
                         sort: false
                       },
                       {
-                        title: 'Total number of users* per node',
+                        title: 'Total number of unique users* per node',
                         annotations: [
                           {
                             xshift: -20,
@@ -218,7 +218,7 @@ export function makePlotsNode(startTime, endTime, node) {
                         number: { font: { size: 50 } }
                       },
                       {
-                        title: 'Total number of unique users of all nodes',
+                        title: 'Total number of unique users* of all nodes',
                         annotations: [
                           {
                             xshift: -20,
@@ -498,9 +498,9 @@ export function makePlotsNode(startTime, endTime, node) {
               function getAppropriateHeader(gd) {
                 const title = gd.layout.title.text;
                 const monthOrYear = details.charAt(0).toUpperCase() + details.slice(1)
-                if (title.includes('of users per')) {
+                if (title.includes('users* per')) {
                   return `${monthOrYear},Node,UsersPerNode`;
-                } else if (title.includes('users of all')) {
+                } else if (title.includes('users* of all')) {
                   return `${monthOrYear},UsersAllNodes`;
                 } else if (title.includes('bytes')) {
                   return `${monthOrYear},Node,Bytes`;
@@ -544,7 +544,7 @@ export function makePlotsNode(startTime, endTime, node) {
                   b: 100
                 },
                 barmode: 'stack',
-                title: 'Number of users per '+details,
+                title: 'Number of unique users* per '+details,
                 annotations: [
                   {
                     y: -0.28,
@@ -581,7 +581,7 @@ export function makePlotsNode(startTime, endTime, node) {
                           marker: Object.values(nodesColors).map(color => ({ color: color }))
                         },
                         {
-                          title: 'Number of users per '+details,
+                          title: 'Number of unique users* per '+details,
                           annotations: [
                             {
                               y: -0.28,
@@ -617,7 +617,7 @@ export function makePlotsNode(startTime, endTime, node) {
                           marker: { color: Object.values(nodesColors)[0] }
                         },
                         {
-                          title: 'Number of unique users of all specified nodes per '+details,
+                          title: 'Number of unique users* of all specified nodes per '+details,
                           annotations: [
                             {
                               y: -0.28,
@@ -926,7 +926,7 @@ export function makePlotsNode(startTime, endTime, node) {
                 hovertemplate: '%{z:.3s}<extra>%{location}</extra>'
               }];
               let mapLayout = {
-                title: 'Number of unique users per country',
+                title: 'Number of unique users* per country',
                 annotations: [
                   {
                     y: -0.15,
@@ -960,7 +960,7 @@ export function makePlotsNode(startTime, endTime, node) {
                           reversescale: true
                         },
                         {
-                          title: 'Number of unique users per country',
+                          title: 'Number of unique users* per country',
                           annotations: [
                             {
                               y: -0.15,

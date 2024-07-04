@@ -204,9 +204,9 @@ function App() {
   }, [openNet]);
 
   // default plots when page loads: eida level current year
-  useEffect(() => {
-    handleClick();
-  }, []);
+  //useEffect(() => {
+    //handleClick();
+  //}, []);
 
   return (
     <div className="App">
@@ -316,8 +316,8 @@ function App() {
                 size="small"
                 freeSolo
                 multiple={isAuthenticated}
-                onInputChange={e => {setInputNetwork(e.target.value); e.target.value && (network.length > 0 || e.target.value.includes(',')) ? setCommaNets(true) : setCommaNets(false)}}
-                onChange={(e, nv) => {setNetwork(nv); setInputNetwork(""); nv.length > 1 ? setCommaNets(true) : setCommaNets(false)}}
+                onInputChange={e => {setInputNetwork(e.target.value); e.target.value && (network !== null && network.length > 0 || e.target.value.includes(',')) ? setCommaNets(true) : setCommaNets(false)}}
+                onChange={(e, nv) => {setNetwork(nv); setInputNetwork(""); Array.isArray(nv) && nv.length > 1 ? setCommaNets(true) : setCommaNets(false)}}
                 options={optionsNet}
                 open={openNet}
                 onOpen={() => setOpenNet(true)}
