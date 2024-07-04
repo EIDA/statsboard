@@ -204,9 +204,9 @@ function App() {
   }, [openNet]);
 
   // default plots when page loads: eida level current year
-  //useEffect(() => {
-    //handleClick();
-  //}, []);
+  useEffect(() => {
+    handleClick();
+  }, []);
 
   return (
     <div className="App">

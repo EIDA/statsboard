@@ -59,6 +59,8 @@ Requirements
 
  * npm (version >= 9.0.0)
 
+ * React (version >= 18.2.0)
+
 Download
 ========
 
