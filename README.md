@@ -45,6 +45,11 @@ After pushing an update, in order to re-deploy in github pages follow below step
    git merge main
    ```
 
+ - Install `gh-pages` package, unless you have already installed it in your system:
+   ```
+   npm install gh-pages --save-dev
+   ```
+
  - Deploy to github pages:
    ```
    npm run deploy -- -m "Some message describing the update (optional)"
