@@ -1,16 +1,16 @@
 {
   "files": {
     "main.css": "/statsboard/static/css/main.265573cd.css",
-    "main.js": "/statsboard/static/js/main.13771ed1.js",
+    "main.js": "/statsboard/static/js/main.22247de4.js",
     "static/js/787.c8b1fb18.chunk.js": "/statsboard/static/js/787.c8b1fb18.chunk.js",
     "static/media/world-countries.json": "/statsboard/static/media/world-countries.36cfc374c3caeabe2159.json",
     "index.html": "/statsboard/index.html",
     "main.265573cd.css.map": "/statsboard/static/css/main.265573cd.css.map",
-    "main.13771ed1.js.map": "/statsboard/static/js/main.13771ed1.js.map",
+    "main.22247de4.js.map": "/statsboard/static/js/main.22247de4.js.map",
     "787.c8b1fb18.chunk.js.map": "/statsboard/static/js/787.c8b1fb18.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.265573cd.css",
-    "static/js/main.13771ed1.js"
+    "static/js/main.22247de4.js"
   ]
 }
